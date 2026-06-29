@@ -1,5 +1,5 @@
 import 'dart:math';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:queens/domain/models/game_level.dart';
 import 'package:queens/ui/core/theme/app_colors.dart';

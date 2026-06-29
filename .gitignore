@@ -48,7 +48,6 @@ app.*.map.json
 
 # Local Hive databases or test DB files
 *.hive
-*.lock
 
 # Local environment variables
 .env

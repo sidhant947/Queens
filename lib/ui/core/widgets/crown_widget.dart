@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class CrownWidget extends StatelessWidget {
   const CrownWidget({super.key, required this.color, required this.size});

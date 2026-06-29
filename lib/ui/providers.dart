@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:queens/data/repositories/progress_repository.dart';
 import 'package:queens/data/services/hive_service.dart';
 import 'package:queens/domain/use_cases/level_generator.dart';
@@ -21,16 +20,16 @@ final levelGeneratorProvider = Provider<LevelGenerator>((ref) {
 
 final homeViewModelProvider =
     StateNotifierProvider<HomeViewModel, HomeViewModelState>((ref) {
-  final progressRepository = ref.watch(progressRepositoryProvider);
-  return HomeViewModel(progressRepository: progressRepository);
-});
+      final progressRepository = ref.watch(progressRepositoryProvider);
+      return HomeViewModel(progressRepository: progressRepository);
+    });
 
 final gameViewModelProvider =
     StateNotifierProvider.autoDispose<GameViewModel, GameViewModelState>((ref) {
-  final progressRepository = ref.watch(progressRepositoryProvider);
-  final levelGenerator = ref.watch(levelGeneratorProvider);
-  return GameViewModel(
-    progressRepository: progressRepository,
-    levelGenerator: levelGenerator,
-  );
-});
+      final progressRepository = ref.watch(progressRepositoryProvider);
+      final levelGenerator = ref.watch(levelGeneratorProvider);
+      return GameViewModel(
+        progressRepository: progressRepository,
+        levelGenerator: levelGenerator,
+      );
+    });

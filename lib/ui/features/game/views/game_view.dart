@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:queens/ui/core/theme/app_colors.dart';
@@ -224,7 +224,7 @@ class _GameViewState extends ConsumerState<GameView> {
 
                                 // Uniform borders between all cells (no region boundary highlights)
                                 final borderSide = BorderSide(
-                                  color: AppColors.headingDark.withOpacity(0.15),
+                                  color: AppColors.headingDark.withValues(alpha: 0.15),
                                   width: 1.0,
                                 );
 
@@ -558,7 +558,7 @@ class _QueensCellState extends ConsumerState<QueensCell> with SingleTickerProvid
               width: widget.hasConflict ? 32 : 0,
               height: widget.hasConflict ? 32 : 0,
               decoration: BoxDecoration(
-                color: const Color(0xFFE53935).withOpacity(widget.hasConflict ? 0.35 : 0.0),
+                color: const Color(0xFFE53935).withValues(alpha: widget.hasConflict ? 0.35 : 0.0),
                 shape: BoxShape.circle,
               ),
             ),
@@ -575,7 +575,7 @@ class _QueensCellState extends ConsumerState<QueensCell> with SingleTickerProvid
         child: Icon(
           Icons.close_rounded,
           size: 22,
-          color: activeIconColor.withOpacity(0.7),
+          color: activeIconColor.withValues(alpha: 0.7),
         ),
       );
     } else if (widget.isAutoBlocked) {
@@ -585,7 +585,7 @@ class _QueensCellState extends ConsumerState<QueensCell> with SingleTickerProvid
         child: Icon(
           Icons.close_rounded,
           size: 16,
-          color: activeIconColor.withOpacity(0.25),
+          color: activeIconColor.withValues(alpha: 0.25),
         ),
       );
     }
