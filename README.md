@@ -21,3 +21,6 @@ Procedurally generated random puzzle sizes from 5x5 up to 9x9, plus 150+ structu
 
 🔒 COMPLETELY OFFLINE
 No internet permission required. Your progress is saved locally using high-performance Hive persistence. Play anywhere, anytime.
+
+# License
+GNU GPL v3 License
