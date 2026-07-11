@@ -7,53 +7,46 @@ class CrownWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size(size, size),
-      painter: _CrownPainter(color),
+    const double outlineOffset = 1.8;
+    // Using the image's built-in padding, we can size the image larger to fill the tile
+    final double innerSize = size;
+    final double centerOffset = 0.0;
+
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          // Black outline/shadow behind the main image in 8 directions
+          for (double dx = -outlineOffset; dx <= outlineOffset; dx += outlineOffset)
+            for (double dy = -outlineOffset; dy <= outlineOffset; dy += outlineOffset)
+              if (dx != 0 || dy != 0)
+                Positioned(
+                  left: centerOffset + dx,
+                  top: centerOffset + dy,
+                  child: Image.asset(
+                    'assets/crown.png',
+                    width: innerSize,
+                    height: innerSize,
+                    fit: BoxFit.contain,
+                    color: const Color(0xFF000000), // Solid black
+                  ),
+                ),
+          // Main crown image
+          Positioned(
+            left: centerOffset,
+            top: centerOffset,
+            child: Image.asset(
+              'assets/crown.png',
+              width: innerSize,
+              height: innerSize,
+              fit: BoxFit.contain,
+            ),
+          ),
+        ],
+      ),
     );
   }
-}
-
-class _CrownPainter extends CustomPainter {
-  final Color color;
-  _CrownPainter(this.color);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-    final path = Path();
-
-    // Draw base band
-    path.moveTo(size.width * 0.15, size.height * 0.85);
-    path.lineTo(size.width * 0.85, size.height * 0.85);
-    path.lineTo(size.width * 0.85, size.height * 0.73);
-    path.lineTo(size.width * 0.15, size.height * 0.73);
-    path.close();
-
-    // Draw peaks
-    path.moveTo(size.width * 0.15, size.height * 0.70);
-    path.lineTo(size.width * 0.10, size.height * 0.35); // Left Peak
-    path.lineTo(size.width * 0.35, size.height * 0.58); // Left Valley
-    path.lineTo(size.width * 0.50, size.height * 0.20); // Center Peak
-    path.lineTo(size.width * 0.65, size.height * 0.58); // Right Valley
-    path.lineTo(size.width * 0.90, size.height * 0.35); // Right Peak
-    path.lineTo(size.width * 0.85, size.height * 0.70);
-    path.close();
-
-    canvas.drawPath(path, paint);
-
-    // Draw small circles at the tips of the peaks
-    final circlePaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    canvas.drawCircle(Offset(size.width * 0.10, size.height * 0.35), size.width * 0.07, circlePaint);
-    canvas.drawCircle(Offset(size.width * 0.50, size.height * 0.20), size.width * 0.07, circlePaint);
-    canvas.drawCircle(Offset(size.width * 0.90, size.height * 0.35), size.width * 0.07, circlePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

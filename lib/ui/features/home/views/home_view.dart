@@ -7,6 +7,7 @@ import 'package:queens/ui/core/widgets/crown_widget.dart';
 import 'package:queens/ui/features/game/views/game_view.dart';
 import 'package:queens/ui/features/how_to_play/views/how_to_play_view.dart';
 import 'package:queens/ui/features/level_select/views/level_select_view.dart';
+import 'package:queens/ui/features/settings/views/settings_view.dart';
 import 'package:queens/ui/providers.dart';
 
 class HomeView extends ConsumerStatefulWidget {
@@ -175,6 +176,20 @@ class _HomeViewState extends ConsumerState<HomeView> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => const HowToPlayView(),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Settings Button (Secondary Button)
+              TangibleButton(
+                text: 'Settings',
+                isSecondary: true,
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsView(),
                   ),
                 ),
               ),

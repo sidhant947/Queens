@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:queens/domain/use_cases/cell_rules.dart';
 import 'package:queens/ui/core/theme/app_colors.dart';
 import 'package:queens/ui/core/widgets/tangible_button.dart';
 import 'package:queens/ui/core/widgets/crown_widget.dart';
@@ -39,10 +40,11 @@ class _GameViewState extends ConsumerState<GameView> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(gameViewModelProvider);
+    final colorblind = ref.watch(settingsProvider).colorblindMode;
 
     ref.listen<GameViewModelState>(gameViewModelProvider, (prev, next) {
       if (next.isComplete && !(prev?.isComplete ?? false)) {
-        _showCompleteDialog();
+        _onLevelComplete(next);
       }
     });
 
@@ -57,31 +59,10 @@ class _GameViewState extends ConsumerState<GameView> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  GestureDetector(
+                  _circleButton(
+                    icon: Icons.arrow_back_ios_new_rounded,
+                    iconSize: 18,
                     onTap: () => Navigator.pop(context),
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.headingDark,
-                          width: 2.0,
-                        ),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: AppColors.headingDark,
-                            offset: Offset(2, 2),
-                            blurRadius: 0,
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        size: 18,
-                        color: AppColors.headingDark,
-                      ),
-                    ),
                   ),
                   Text(
                     state.isRandomMode
@@ -95,31 +76,25 @@ class _GameViewState extends ConsumerState<GameView> {
                       letterSpacing: 1.0,
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () => ref.read(gameViewModelProvider.notifier).resetLevel(),
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.headingDark,
-                          width: 2.0,
-                        ),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: AppColors.headingDark,
-                            offset: Offset(2, 2),
-                            blurRadius: 0,
-                          ),
-                        ],
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _circleButton(
+                        icon: Icons.undo_rounded,
+                        iconSize: 20,
+                        enabled: state.canUndo && !state.isComplete,
+                        onTap: () =>
+                            ref.read(gameViewModelProvider.notifier).undo(),
                       ),
-                      child: const Icon(
-                        Icons.refresh_rounded,
-                        size: 20,
-                        color: AppColors.headingDark,
+                      const SizedBox(width: 8),
+                      _circleButton(
+                        icon: Icons.refresh_rounded,
+                        iconSize: 20,
+                        onTap: () => ref
+                            .read(gameViewModelProvider.notifier)
+                            .resetLevel(),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),
@@ -145,7 +120,7 @@ class _GameViewState extends ConsumerState<GameView> {
                             ],
                           ),
                         )
-                      : _buildGame(state),
+                      : _buildGame(state, colorblind),
             ),
           ],
         ),
@@ -153,7 +128,7 @@ class _GameViewState extends ConsumerState<GameView> {
     );
   }
 
-  Widget _buildGame(GameViewModelState state) {
+  Widget _buildGame(GameViewModelState state, bool colorblind) {
     final level = state.level;
     if (level == null) return const SizedBox.shrink();
 
@@ -192,7 +167,7 @@ class _GameViewState extends ConsumerState<GameView> {
             children: [
               _stat('MOVES', '${state.moveCount}', Icons.trending_up_rounded),
               _verticalDivider(),
-              _stat('GRID', '${level.gridSize}x${level.gridSize}', Icons.grid_on_rounded),
+              _stat('TIME', _formatTime(state.elapsedSeconds), Icons.timer_outlined),
               _verticalDivider(),
               _stat('QUEENS', '$queenCount/${level.gridSize}', Icons.star_rounded),
             ],
@@ -222,26 +197,47 @@ class _GameViewState extends ConsumerState<GameView> {
                                 final regionIndex = level.colorRegions[r][c];
                                 final regionColor = level.regionColors[regionIndex];
 
-                                // Uniform borders between all cells (no region boundary highlights)
-                                final borderSide = BorderSide(
+                                // Faint uniform gridline.
+                                final lineSide = BorderSide(
                                   color: AppColors.headingDark.withValues(alpha: 0.15),
                                   width: 1.0,
                                 );
+                                // Strong divider drawn between two different
+                                // regions when colorblind mode is on.
+                                const boundarySide = BorderSide(
+                                  color: AppColors.headingDark,
+                                  width: 2.5,
+                                );
+
+                                BorderSide edge(int nr, int nc) {
+                                  if (nr < 0 || nr >= N || nc < 0 || nc >= N) {
+                                    return BorderSide.none;
+                                  }
+                                  if (colorblind &&
+                                      level.colorRegions[nr][nc] != regionIndex) {
+                                    return boundarySide;
+                                  }
+                                  return lineSide;
+                                }
 
                                 // Check if cell is blocked (auto-X)
-                                final blocked = _isCellBlocked(r, c, state.board, level);
+                                final blocked = CellRules.isCellBlocked(
+                                    r, c, state.board, level);
+                                final isHinted =
+                                    state.hintCell == r * N + c;
 
                                 return Expanded(
                                   child: QueensCell(
                                     cellState: cellState,
                                     hasConflict: hasConflict,
                                     isAutoBlocked: blocked,
+                                    isHinted: isHinted,
                                     regionColor: regionColor,
                                     border: Border(
-                                      top: r == 0 ? BorderSide.none : borderSide,
-                                      bottom: r == N - 1 ? BorderSide.none : borderSide,
-                                      left: c == 0 ? BorderSide.none : borderSide,
-                                      right: c == N - 1 ? BorderSide.none : borderSide,
+                                      top: edge(r - 1, c),
+                                      bottom: edge(r + 1, c),
+                                      left: edge(r, c - 1),
+                                      right: edge(r, c + 1),
                                     ),
                                     onTap: () {
                                       ref.read(gameViewModelProvider.notifier).toggleCell(r, c);
@@ -279,26 +275,47 @@ class _GameViewState extends ConsumerState<GameView> {
     );
   }
 
-  bool _isCellBlocked(int r, int c, List<List<CellState>> board, level) {
-    if (board[r][c] != CellState.empty) return false;
-    final N = level.gridSize;
-    final myRegion = level.colorRegions[r][c];
+  Widget _circleButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    double iconSize = 20,
+    bool enabled = true,
+  }) {
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      child: Opacity(
+        opacity: enabled ? 1.0 : 0.35,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: AppColors.headingDark,
+              width: 2.0,
+            ),
+            boxShadow: const [
+              BoxShadow(
+                color: AppColors.headingDark,
+                offset: Offset(2, 2),
+                blurRadius: 0,
+              ),
+            ],
+          ),
+          child: Icon(
+            icon,
+            size: iconSize,
+            color: AppColors.headingDark,
+          ),
+        ),
+      ),
+    );
+  }
 
-    for (int i = 0; i < N; i++) {
-      for (int j = 0; j < N; j++) {
-        if (board[i][j] == CellState.queen) {
-          // Same row
-          if (i == r) return true;
-          // Same col
-          if (j == c) return true;
-          // Same color region
-          if (level.colorRegions[i][j] == myRegion) return true;
-          // 8-way adjacent
-          if ((i - r).abs() <= 1 && (j - c).abs() <= 1) return true;
-        }
-      }
-    }
-    return false;
+  String _formatTime(int totalSeconds) {
+    final minutes = (totalSeconds ~/ 60).toString().padLeft(2, '0');
+    final seconds = (totalSeconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
   }
 
   Widget _stat(String label, String value, IconData icon) {
@@ -344,9 +361,26 @@ class _GameViewState extends ConsumerState<GameView> {
     );
   }
 
-  void _showCompleteDialog() {
-    final state = ref.read(gameViewModelProvider);
+  Future<void> _onLevelComplete(GameViewModelState state) async {
+    // Capture the prior best (before recording) so we can flag a new record,
+    // then persist the result immediately so it is saved even if the player
+    // exits via Home rather than Next Level.
+    bool isNewBest = false;
+    if (!state.isRandomMode && state.level != null) {
+      final progress = await ref.read(progressRepositoryProvider).getProgress();
+      final priorMoves = progress.bestMoves[state.level!.levelNumber];
+      final priorTime = progress.bestTimeSeconds[state.level!.levelNumber];
+      isNewBest = priorMoves == null ||
+          state.moveCount < priorMoves ||
+          priorTime == null ||
+          state.elapsedSeconds < priorTime;
+    }
+    await ref.read(gameViewModelProvider.notifier).completeLevel();
+    if (!mounted) return;
+    _showCompleteDialog(state, isNewBest);
+  }
 
+  void _showCompleteDialog(GameViewModelState state, bool isNewBest) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -407,8 +441,8 @@ class _GameViewState extends ConsumerState<GameView> {
                 fit: BoxFit.scaleDown,
                 child: Text(
                   state.isRandomMode
-                      ? 'You solved this ${state.level?.gridSize}x${state.level?.gridSize} puzzle in ${state.moveCount} moves.'
-                      : 'You solved Level ${widget.levelNumber} in ${state.moveCount} moves.',
+                      ? 'You solved this ${state.level?.gridSize}x${state.level?.gridSize} puzzle in ${state.moveCount} moves and ${_formatTime(state.elapsedSeconds)}.'
+                      : 'You solved Level ${widget.levelNumber} in ${state.moveCount} moves and ${_formatTime(state.elapsedSeconds)}.',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontFamily: 'BebasNeue',
@@ -419,28 +453,48 @@ class _GameViewState extends ConsumerState<GameView> {
                   ),
                 ),
               ),
+              if (isNewBest && !state.isRandomMode) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFCAFFBF),
+                    borderRadius: BorderRadius.circular(20),
+                    border:
+                        Border.all(color: AppColors.headingDark, width: 2.0),
+                  ),
+                  child: const Text(
+                    '★ NEW BEST!',
+                    style: TextStyle(
+                      fontFamily: 'BebasNeue',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.headingDark,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 28),
               Column(
                 children: [
                   TangibleButton(
                     text: state.isRandomMode ? 'Play Again' : 'Next Level',
                     height: 50,
-                    onPressed: () async {
+                    onPressed: () {
+                      // Progress was already recorded in _onLevelComplete.
                       final notifier = ref.read(gameViewModelProvider.notifier);
-                      await notifier.completeLevel();
-                      if (!mounted) return;
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                        if (state.isRandomMode) {
-                          notifier.loadRandomLevel(state.randomDifficulty ?? 'Easy');
-                        } else {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => GameView(levelNumber: widget.levelNumber + 1),
-                            ),
-                          );
-                        }
+                      Navigator.pop(context);
+                      if (state.isRandomMode) {
+                        notifier.loadRandomLevel(state.randomDifficulty ?? 'Easy');
+                      } else {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => GameView(levelNumber: widget.levelNumber + 1),
+                          ),
+                        );
                       }
                     },
                   ),
@@ -449,14 +503,9 @@ class _GameViewState extends ConsumerState<GameView> {
                     text: 'Home',
                     isSecondary: true,
                     height: 50,
-                    onPressed: () async {
-                      final notifier = ref.read(gameViewModelProvider.notifier);
-                      await notifier.completeLevel();
-                      if (!mounted) return;
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                        Navigator.pop(context);
-                      }
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.pop(context);
                     },
                   ),
                 ],
@@ -475,6 +524,7 @@ class QueensCell extends ConsumerStatefulWidget {
     required this.cellState,
     required this.hasConflict,
     required this.isAutoBlocked,
+    required this.isHinted,
     required this.regionColor,
     required this.border,
     required this.onTap,
@@ -483,6 +533,7 @@ class QueensCell extends ConsumerStatefulWidget {
   final CellState cellState;
   final bool hasConflict;
   final bool isAutoBlocked;
+  final bool isHinted;
   final Color regionColor;
   final BoxBorder border;
   final VoidCallback onTap;
@@ -539,7 +590,28 @@ class _QueensCellState extends ConsumerState<QueensCell> with SingleTickerProvid
           border: widget.border,
         ),
         alignment: Alignment.center,
-        child: _buildContent(),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Hint flash overlay.
+            Positioned.fill(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                margin: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  color: widget.isHinted
+                      ? const Color(0xFFFFD166).withValues(alpha: 0.55)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(6),
+                  border: widget.isHinted
+                      ? Border.all(color: AppColors.headingDark, width: 2.0)
+                      : null,
+                ),
+              ),
+            ),
+            _buildContent(),
+          ],
+        ),
       ),
     );
   }

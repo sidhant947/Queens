@@ -32,14 +32,17 @@ class LevelGenerator {
   }
 
   GameLevel _generateLevelWithSeed(int levelNumber, int gridSize, Random random) {
-    // 1. Find a valid placement of gridSize queens that do not touch (row, col, 8-way adjacent)
-    final queenCols = List<int>.filled(gridSize, -1);
-    final solved = _solveQueens(0, gridSize, queenCols, random);
-    if (!solved) {
-      // Fallback in case of highly improbable random failure (though it solves instantly)
-      for (int i = 0; i < gridSize; i++) {
-        queenCols[i] = i;
-      }
+    // 1. Find a valid placement of gridSize queens that do not touch (row, col, 8-way adjacent).
+    //    The backtracking solver effectively never fails for N >= 5, but if a particular
+    //    shuffle order somehow dead-ends we re-seed and retry rather than fall back to a
+    //    diagonal placement (which would itself violate the diagonal-adjacency rule).
+    var queenCols = List<int>.filled(gridSize, -1);
+    var solved = _solveQueens(0, gridSize, queenCols, random);
+    var reseed = 1;
+    while (!solved && reseed <= 100) {
+      queenCols = List<int>.filled(gridSize, -1);
+      solved = _solveQueens(0, gridSize, queenCols, Random(reseed * 1000003));
+      reseed++;
     }
 
     // 2. Generate connected color regions containing exactly one queen each
@@ -102,6 +105,7 @@ class LevelGenerator {
       gridSize: gridSize,
       colorRegions: colorRegions,
       regionColors: colors,
+      solutionCols: List<int>.unmodifiable(queenCols),
     );
   }
 

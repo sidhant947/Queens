@@ -1,15 +1,26 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:queens/data/repositories/progress_repository.dart';
 import 'package:queens/domain/models/game_level.dart';
+import 'package:queens/domain/use_cases/cell_rules.dart';
 import 'package:queens/domain/use_cases/level_generator.dart';
 
 enum CellState {
   empty,
   x,
   queen,
+}
+
+/// A single board snapshot kept on the undo stack.
+@immutable
+class _Snapshot {
+  const _Snapshot(this.board, this.moveCount);
+  final List<List<CellState>> board;
+  final int moveCount;
 }
 
 @immutable
@@ -21,6 +32,9 @@ class GameViewModelState {
     this.isLoading = false,
     this.isComplete = false,
     this.moveCount = 0,
+    this.elapsedSeconds = 0,
+    this.canUndo = false,
+    this.hintCell,
     this.error,
     this.isRandomMode = false,
     this.randomDifficulty,
@@ -34,6 +48,11 @@ class GameViewModelState {
   final bool isLoading;
   final bool isComplete;
   final int moveCount;
+  final int elapsedSeconds;
+  final bool canUndo;
+
+  /// Encoded `row * gridSize + col` of a hinted cell to flash, or null.
+  final int? hintCell;
   final String? error;
   final bool isRandomMode;
   final String? randomDifficulty;
@@ -47,6 +66,10 @@ class GameViewModelState {
     bool? isLoading,
     bool? isComplete,
     int? moveCount,
+    int? elapsedSeconds,
+    bool? canUndo,
+    int? hintCell,
+    bool clearHint = false,
     String? error,
     bool? isRandomMode,
     String? randomDifficulty,
@@ -60,6 +83,9 @@ class GameViewModelState {
       isLoading: isLoading ?? this.isLoading,
       isComplete: isComplete ?? this.isComplete,
       moveCount: moveCount ?? this.moveCount,
+      elapsedSeconds: elapsedSeconds ?? this.elapsedSeconds,
+      canUndo: canUndo ?? this.canUndo,
+      hintCell: clearHint ? null : (hintCell ?? this.hintCell),
       error: error,
       isRandomMode: isRandomMode ?? this.isRandomMode,
       randomDifficulty: randomDifficulty ?? this.randomDifficulty,
@@ -78,31 +104,82 @@ class GameViewModel extends StateNotifier<GameViewModelState> {
   final ProgressRepository progressRepository;
   final LevelGenerator levelGenerator;
 
+  static const int _maxUndo = 50;
+
+  final List<_Snapshot> _undoStack = [];
+  Timer? _timer;
+  Timer? _hintTimer;
+
+  // --- Timer ---------------------------------------------------------------
+
+  void _startTimer() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (state.isComplete) {
+        _timer?.cancel();
+        return;
+      }
+      state = state.copyWith(elapsedSeconds: state.elapsedSeconds + 1);
+    });
+  }
+
+  void _stopTimer() {
+    _timer?.cancel();
+    _timer = null;
+  }
+
+  // --- Loading -------------------------------------------------------------
+
+  List<List<CellState>> _emptyBoard(int n) =>
+      List.generate(n, (_) => List<CellState>.filled(n, CellState.empty));
+
   Future<void> loadLevel(int levelNumber) async {
+    _undoStack.clear();
     state = const GameViewModelState(isLoading: true);
 
     try {
       final level = levelGenerator.generate(levelNumber);
-      final board = List.generate(
-        level.gridSize,
-        (_) => List.filled(level.gridSize, CellState.empty),
-      );
-      final conflicts = List.generate(
-        level.gridSize,
-        (_) => List.filled(level.gridSize, false),
-      );
+
+      // Resume a saved game if one exists for this exact level.
+      final progress = await progressRepository.getProgress();
+      List<List<CellState>> board;
+      int moveCount = 0;
+      int elapsed = 0;
+      if (progress.savedLevelNumber == levelNumber &&
+          progress.savedBoard != null &&
+          progress.savedBoard!.length == level.gridSize) {
+        board = progress.savedBoard!
+            .map((row) =>
+                row.map((i) => CellState.values[i]).toList(growable: false))
+            .toList();
+        moveCount = progress.savedMoveCount;
+        elapsed = progress.savedElapsedSeconds;
+      } else {
+        board = _emptyBoard(level.gridSize);
+      }
+
+      final conflicts = CellRules.computeConflicts(board, level);
+      final isComplete = CellRules.isComplete(board, level);
 
       state = GameViewModelState(
         level: level,
         board: board,
         conflicts: conflicts,
+        moveCount: moveCount,
+        elapsedSeconds: elapsed,
+        isComplete: isComplete,
       );
+      if (!isComplete) _startTimer();
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: 'Failed to load level: $e');
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Failed to load level: $e',
+      );
     }
   }
 
   Future<void> loadRandomLevel(String difficulty, {int? seed}) async {
+    _undoStack.clear();
     final int levelSeed = seed ?? DateTime.now().millisecondsSinceEpoch;
     state = GameViewModelState(
       isLoading: true,
@@ -127,22 +204,20 @@ class GameViewModel extends StateNotifier<GameViewModelState> {
         gridSize: gridSize,
         seed: levelSeed,
       );
-      final board = List.generate(
-        gridSize,
-        (_) => List.filled(gridSize, CellState.empty),
-      );
-      final conflicts = List.generate(
-        gridSize,
-        (_) => List.filled(gridSize, false),
-      );
+      final board = _emptyBoard(gridSize);
+      final conflicts = CellRules.computeConflicts(board, level);
 
       state = state.copyWith(
         level: level,
         board: board,
         conflicts: conflicts,
+        moveCount: 0,
+        elapsedSeconds: 0,
+        canUndo: false,
         isLoading: false,
         randomGridSize: gridSize,
       );
+      _startTimer();
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -151,12 +226,18 @@ class GameViewModel extends StateNotifier<GameViewModelState> {
     }
   }
 
-  void toggleCell(int r, int c) {
-    if (state.isComplete || state.level == null) return;
+  // --- Interaction ---------------------------------------------------------
 
-    final N = state.level!.gridSize;
+  void toggleCell(int r, int c) {
+    final level = state.level;
+    if (state.isComplete || level == null) return;
+
+    // Snapshot current board for undo.
+    _pushUndo();
+
+    final n = level.gridSize;
     final newBoard = List.generate(
-      N,
+      n,
       (row) => List<CellState>.from(state.board[row]),
     );
 
@@ -179,77 +260,12 @@ class GameViewModel extends StateNotifier<GameViewModelState> {
 
     newBoard[r][c] = next;
 
-    // Calculate conflicts
-    final newConflicts = List.generate(
-      N,
-      (_) => List.filled(N, false),
-    );
-
-    int queenCount = 0;
-
-    for (int i = 0; i < N; i++) {
-      for (int j = 0; j < N; j++) {
-        if (newBoard[i][j] == CellState.queen) {
-          queenCount++;
-          // Check row conflict
-          for (int col = 0; col < N; col++) {
-            if (col != j && newBoard[i][col] == CellState.queen) {
-              newConflicts[i][j] = true;
-              newConflicts[i][col] = true;
-            }
-          }
-          // Check col conflict
-          for (int row = 0; row < N; row++) {
-            if (row != i && newBoard[row][j] == CellState.queen) {
-              newConflicts[i][j] = true;
-              newConflicts[row][j] = true;
-            }
-          }
-          // Check color region conflict
-          final myRegion = state.level!.colorRegions[i][j];
-          for (int row = 0; row < N; row++) {
-            for (int col = 0; col < N; col++) {
-              if ((row != i || col != j) &&
-                  newBoard[row][col] == CellState.queen &&
-                  state.level!.colorRegions[row][col] == myRegion) {
-                newConflicts[i][j] = true;
-                newConflicts[row][col] = true;
-              }
-            }
-          }
-          // Check 8-way adjacent neighbors
-          for (int dr = -1; dr <= 1; dr++) {
-            for (int dc = -1; dc <= 1; dc++) {
-              if (dr == 0 && dc == 0) continue;
-              final nr = i + dr;
-              final nc = j + dc;
-              if (nr >= 0 && nr < N && nc >= 0 && nc < N) {
-                if (newBoard[nr][nc] == CellState.queen) {
-                  newConflicts[i][j] = true;
-                  newConflicts[nr][nc] = true;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    // Check if level is complete
-    bool hasConflicts = false;
-    for (int i = 0; i < N; i++) {
-      for (int j = 0; j < N; j++) {
-        if (newConflicts[i][j]) {
-          hasConflicts = true;
-          break;
-        }
-      }
-    }
-
-    final isComplete = queenCount == N && !hasConflicts;
+    final newConflicts = CellRules.computeConflicts(newBoard, level);
+    final isComplete = CellRules.isComplete(newBoard, level);
 
     if (isComplete) {
       HapticFeedback.heavyImpact();
+      _stopTimer();
     }
 
     state = state.copyWith(
@@ -257,25 +273,103 @@ class GameViewModel extends StateNotifier<GameViewModelState> {
       conflicts: newConflicts,
       moveCount: state.moveCount + movesDelta,
       isComplete: isComplete,
+      canUndo: _undoStack.isNotEmpty,
+      clearHint: true,
+    );
+
+    _persistInProgress();
+  }
+
+  void _pushUndo() {
+    final snapshotBoard = state.board
+        .map((row) => List<CellState>.from(row))
+        .toList(growable: false);
+    _undoStack.add(_Snapshot(snapshotBoard, state.moveCount));
+    if (_undoStack.length > _maxUndo) {
+      _undoStack.removeAt(0);
+    }
+  }
+
+  void undo() {
+    if (_undoStack.isEmpty || state.level == null || state.isComplete) return;
+    final snapshot = _undoStack.removeLast();
+    final conflicts = CellRules.computeConflicts(snapshot.board, state.level!);
+    HapticFeedback.lightImpact();
+    state = state.copyWith(
+      board: snapshot.board,
+      conflicts: conflicts,
+      moveCount: snapshot.moveCount,
+      canUndo: _undoStack.isNotEmpty,
+      clearHint: true,
+    );
+    _persistInProgress();
+  }
+
+  void requestHint() {
+    final level = state.level;
+    if (level == null || state.isComplete) return;
+    final hint = CellRules.suggestHint(state.board, level);
+    if (hint == null) return;
+    final encoded = hint[0] * level.gridSize + hint[1];
+    HapticFeedback.selectionClick();
+    state = state.copyWith(hintCell: encoded);
+
+    // Auto-clear the flash after a short delay.
+    _hintTimer?.cancel();
+    _hintTimer = Timer(const Duration(milliseconds: 1400), () {
+      if (mounted) state = state.copyWith(clearHint: true);
+    });
+  }
+
+  // --- Persistence ---------------------------------------------------------
+
+  void _persistInProgress() {
+    final level = state.level;
+    if (level == null || state.isRandomMode) return;
+    if (state.isComplete) return;
+    // Fire-and-forget; Hive writes are local and fast.
+    progressRepository.saveInProgress(
+      level.levelNumber,
+      state.board,
+      state.moveCount,
+      state.elapsedSeconds,
     );
   }
 
   Future<void> completeLevel() async {
-    if (state.level == null || !state.isComplete) return;
+    final level = state.level;
+    if (level == null || !state.isComplete) return;
     if (state.isRandomMode) {
       await progressRepository.addRandomLevelMoves(state.moveCount);
     } else {
       await progressRepository.completeLevel(state.moveCount);
+      await progressRepository.recordLevelResult(
+        level.levelNumber,
+        state.moveCount,
+        state.elapsedSeconds,
+      );
+      await progressRepository.clearInProgress();
     }
   }
 
-  void resetLevel() {
-    if (state.level != null) {
-      if (state.isRandomMode) {
-        loadRandomLevel(state.randomDifficulty ?? 'Easy', seed: state.randomSeed);
-      } else {
-        loadLevel(state.level!.levelNumber);
-      }
+  Future<void> resetLevel() async {
+    final level = state.level;
+    if (level == null) return;
+    if (state.isRandomMode) {
+      await loadRandomLevel(state.randomDifficulty ?? 'Easy',
+          seed: state.randomSeed);
+    } else {
+      // Drop any saved progress for this level before reloading fresh, so the
+      // resume check in loadLevel doesn't restore the board we just cleared.
+      await progressRepository.clearInProgress();
+      await loadLevel(level.levelNumber);
     }
+  }
+
+  @override
+  void dispose() {
+    _stopTimer();
+    _hintTimer?.cancel();
+    super.dispose();
   }
 }

@@ -23,23 +23,23 @@ class AppColors {
   static const Color lightCard = Colors.white;
   static const Color lightBorder = Color(0xFF2B2D42);
 
-  // Designer-curated, highly distinctive, and harmonious premium color palette (expanded to 16 colors)
+  // Designer-curated, highly distinctive, and harmonious premium color palette (expanded to 16 colors matching reference.png)
   static const List<Color> queensColors = [
-    Color(0xFFF28482), // Coral Rose
-    Color(0xFFF3C68F), // Warm Honey
-    Color(0xFF84A59D), // Sage Green
-    Color(0xFFB5A6C9), // Lilac Lavender
-    Color(0xFF6B9080), // Teal Blue
-    Color(0xFFE07A5F), // Muted Terracotta
-    Color(0xFF3D5A80), // Sky Indigo
-    Color(0xFFA3B19B), // Soft Olive
-    Color(0xFFE9C46A), // Pale Mustard
-    Color(0xFFE5989B), // Blush Rose
-    Color(0xFF9B5DE5), // Muted Plum
-    Color(0xFF52B788), // Deep Mint
-    Color(0xFFF4A261), // Sandy Orange
-    Color(0xFF2A9D8F), // Dark Cyan/Teal
-    Color(0xFFE76F51), // Burnt Sienna
-    Color(0xFFDDA15E), // Wheat Brown
+    Color(0xFFA0D488), // Light Green
+    Color(0xFF57BBD4), // Cyan
+    Color(0xFFF5D377), // Pastel Yellow
+    Color(0xFF8379CF), // Lavender Purple
+    Color(0xFFD2778A), // Muted Rose/Pink-Red
+    Color(0xFF4CAF73), // Mid Green
+    Color(0xFFEFA56B), // Soft Orange
+    Color(0xFFA4C9F5), // Sky Blue
+    Color(0xFFEE9DEB), // Pink
+    Color(0xFFCAB05D), // Mustard
+    Color(0xFFD2C1EC), // Soft Lavender
+    Color(0xFFF7C3A1), // Soft Apricot
+    Color(0xFFB5CBB7), // Pale Sage
+    Color(0xFFFFF0A5), // Creamy Yellow
+    Color(0xFF80CED7), // Light Teal
+    Color(0xFFB38D97), // Muted Mauve
   ];
 }
