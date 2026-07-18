@@ -178,8 +178,7 @@ class _LevelSelectViewState extends ConsumerState<LevelSelectView> {
               ref.read(homeViewModelProvider.notifier).loadProgress();
             }
           : null,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
+      child: Container(
         decoration: BoxDecoration(
           color: cardBg,
           borderRadius: BorderRadius.circular(12),

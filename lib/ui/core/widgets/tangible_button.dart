@@ -46,8 +46,7 @@ class _TangibleButtonState extends State<TangibleButton> {
       onTapCancel: () {
         if (isInteractive) setState(() => _isPressed = false);
       },
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 100),
+      child: Opacity(
         opacity: isPressedNow ? 0.8 : 1.0,
         child: Container(
           height: widget.height,

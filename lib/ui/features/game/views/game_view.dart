@@ -474,10 +474,8 @@ class _GameViewState extends ConsumerState<GameView> {
                         isSecondary: true,
                         height: 50,
                         onPressed: () async {
-                          final url = Uri.parse('https://github.com/sponsors/sidhant947');
-                          if (await canLaunchUrl(url)) {
-                            await launchUrl(url, mode: LaunchMode.externalApplication);
-                          }
+                          final url = Uri.parse('https://buymeacoffee.com/sidhant947');
+                          await launchUrl(url, mode: LaunchMode.externalApplication);
                         },
                       ),
                     ],

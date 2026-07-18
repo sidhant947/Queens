@@ -1,10 +1,38 @@
 import 'package:material_ui/material_ui.dart';
 
+/// A page transitions builder that applies no animation at all.
+class _NoTransitionBuilder extends PageTransitionsBuilder {
+  const _NoTransitionBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return child;
+  }
+}
+
 class AppTheme {
   AppTheme._();
 
+  static const _noTransitionTheme = PageTransitionsTheme(
+    builders: {
+      TargetPlatform.android: _NoTransitionBuilder(),
+      TargetPlatform.iOS: _NoTransitionBuilder(),
+      TargetPlatform.linux: _NoTransitionBuilder(),
+      TargetPlatform.macOS: _NoTransitionBuilder(),
+      TargetPlatform.windows: _NoTransitionBuilder(),
+      TargetPlatform.fuchsia: _NoTransitionBuilder(),
+    },
+  );
+
   // 1. Light Neobrutalist Theme (Warm Ivory & Charcoal)
   static ThemeData get light => ThemeData(
+    pageTransitionsTheme: _noTransitionTheme,
     brightness: Brightness.light,
     scaffoldBackgroundColor: const Color(0xFFFAF6EE),
     appBarTheme: const AppBarTheme(
@@ -41,6 +69,7 @@ class AppTheme {
 
   // 2. Premium Obsidian Dark Neobrutalist Theme (Deep Night Obsidian & Cream Highlights)
   static ThemeData get dark => ThemeData(
+    pageTransitionsTheme: _noTransitionTheme,
     brightness: Brightness.dark,
     scaffoldBackgroundColor: const Color(0xFF121318), // Deep Premium Obsidian
     appBarTheme: const AppBarTheme(
