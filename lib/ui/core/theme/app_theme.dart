@@ -7,7 +7,6 @@ class AppTheme {
   static ThemeData get light => ThemeData(
     brightness: Brightness.light,
     scaffoldBackgroundColor: const Color(0xFFFAF6EE),
-    fontFamily: 'BebasNeue',
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.transparent,
       elevation: 0,
@@ -34,8 +33,8 @@ class AppTheme {
       headlineSmall: TextStyle(fontFamily: 'BebasNeue', color: Color(0xFF2B2D42), letterSpacing: -0.5),
       titleLarge: TextStyle(fontFamily: 'BebasNeue', color: Color(0xFF2B2D42), letterSpacing: 0.5),
       titleMedium: TextStyle(fontFamily: 'BebasNeue', color: Color(0xFF2B2D42), letterSpacing: 0.5),
-      bodyLarge: TextStyle(fontFamily: 'BebasNeue', color: Color(0xFF2B2D42), fontWeight: FontWeight.w500),
-      bodyMedium: TextStyle(fontFamily: 'BebasNeue', color: Color(0xFF6C757D), fontWeight: FontWeight.normal),
+      bodyLarge: TextStyle(color: Color(0xFF2B2D42), fontWeight: FontWeight.w500),
+      bodyMedium: TextStyle(color: Color(0xFF6C757D), fontWeight: FontWeight.normal),
       labelLarge: TextStyle(fontFamily: 'BebasNeue', color: Color(0xFF2B2D42), fontWeight: FontWeight.bold),
     ),
   );
@@ -44,7 +43,6 @@ class AppTheme {
   static ThemeData get dark => ThemeData(
     brightness: Brightness.dark,
     scaffoldBackgroundColor: const Color(0xFF121318), // Deep Premium Obsidian
-    fontFamily: 'BebasNeue',
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.transparent,
       elevation: 0,
@@ -71,8 +69,8 @@ class AppTheme {
       headlineSmall: TextStyle(fontFamily: 'BebasNeue', color: Color(0xFFFAF6EE), letterSpacing: -0.5),
       titleLarge: TextStyle(fontFamily: 'BebasNeue', color: Color(0xFFFAF6EE), letterSpacing: 0.5),
       titleMedium: TextStyle(fontFamily: 'BebasNeue', color: Color(0xFFFAF6EE), letterSpacing: 0.5),
-      bodyLarge: TextStyle(fontFamily: 'BebasNeue', color: Color(0xFFFAF6EE), fontWeight: FontWeight.w500),
-      bodyMedium: TextStyle(fontFamily: 'BebasNeue', color: Color(0xFF8E92A6), fontWeight: FontWeight.normal),
+      bodyLarge: TextStyle(color: Color(0xFFFAF6EE), fontWeight: FontWeight.w500),
+      bodyMedium: TextStyle(color: Color(0xFF8E92A6), fontWeight: FontWeight.normal),
       labelLarge: TextStyle(fontFamily: 'BebasNeue', color: Color(0xFFFAF6EE), fontWeight: FontWeight.bold),
     ),
   );

@@ -7,46 +7,77 @@ class CrownWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const double outlineOffset = 1.8;
-    // Using the image's built-in padding, we can size the image larger to fill the tile
-    final double innerSize = size;
-    final double centerOffset = 0.0;
-
     return SizedBox(
       width: size,
       height: size,
-      child: Stack(
-        clipBehavior: Clip.none,
-        alignment: Alignment.center,
-        children: [
-          // Black outline/shadow behind the main image in 8 directions
-          for (double dx = -outlineOffset; dx <= outlineOffset; dx += outlineOffset)
-            for (double dy = -outlineOffset; dy <= outlineOffset; dy += outlineOffset)
-              if (dx != 0 || dy != 0)
-                Positioned(
-                  left: centerOffset + dx,
-                  top: centerOffset + dy,
-                  child: Image.asset(
-                    'assets/crown.png',
-                    width: innerSize,
-                    height: innerSize,
-                    fit: BoxFit.contain,
-                    color: const Color(0xFF000000), // Solid black
-                  ),
-                ),
-          // Main crown image
-          Positioned(
-            left: centerOffset,
-            top: centerOffset,
-            child: Image.asset(
-              'assets/crown.png',
-              width: innerSize,
-              height: innerSize,
-              fit: BoxFit.contain,
-            ),
-          ),
-        ],
+      child: CustomPaint(
+        painter: CrownPainter(color: color),
       ),
     );
+  }
+}
+
+class CrownPainter extends CustomPainter {
+  final Color color;
+
+  CrownPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double w = size.width;
+    final double h = size.height;
+
+    final Path path = Path();
+    
+    // Precision-crafted path tracing the target image:
+    // https://framerusercontent.com/images/qBuoCENHzL2l9KkMZuRNwmH1zj8.png?width=512&height=512
+    path.moveTo(0.30 * w, 1.00 * h);
+    path.lineTo(0.70 * w, 1.00 * h);
+    
+    // Bottom-right corner and up right side
+    path.cubicTo(0.86 * w, 1.00 * h, 1.00 * w, 0.73 * h, 1.00 * w, 0.38 * h);
+    
+    // Right peak tip
+    path.cubicTo(1.00 * w, 0.28 * h, 0.97 * w, 0.26 * h, 0.93 * w, 0.28 * h);
+    
+    // Down to right valley
+    path.cubicTo(0.88 * w, 0.31 * h, 0.83 * w, 0.43 * h, 0.77 * w, 0.43 * h);
+    
+    // Up to center peak
+    path.cubicTo(0.70 * w, 0.43 * h, 0.58 * w, 0.00 * h, 0.50 * w, 0.00 * h);
+    
+    // Center peak tip and down to left valley
+    path.cubicTo(0.42 * w, 0.00 * h, 0.30 * w, 0.43 * h, 0.23 * w, 0.43 * h);
+    
+    // Up to left peak
+    path.cubicTo(0.17 * w, 0.43 * h, 0.12 * w, 0.31 * h, 0.07 * w, 0.28 * h);
+    
+    // Left peak tip
+    path.cubicTo(0.03 * w, 0.26 * h, 0.00 * w, 0.28 * h, 0.00 * w, 0.38 * h);
+    
+    // Down left side and bottom-left corner
+    path.cubicTo(0.00 * w, 0.73 * h, 0.14 * w, 1.00 * h, 0.30 * w, 1.00 * h);
+    
+    path.close();
+
+    // 1. Draw outline/border (black/dark stroke)
+    final Paint borderPaint = Paint()
+      ..color = const Color(0xFF000000)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.0
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    canvas.drawPath(path, borderPaint);
+
+    // 2. Draw fill
+    final Paint fillPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(path, fillPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CrownPainter oldDelegate) {
+    return oldDelegate.color != color;
   }
 }

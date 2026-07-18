@@ -28,10 +28,9 @@ class _TangibleButtonState extends State<TangibleButton> {
     final isPressedNow = _isPressed && isInteractive;
 
     final Color buttonBg = widget.isSecondary 
-        ? Colors.white 
-        : const Color(0xFFB5E2FA); // Pastel Sky Blue
+        ? AppColors.surface 
+        : AppColors.primary;
 
-    final Color borderColor = AppColors.headingDark;
     final Color textColor = AppColors.headingDark;
 
     return GestureDetector(
@@ -47,26 +46,19 @@ class _TangibleButtonState extends State<TangibleButton> {
       onTapCancel: () {
         if (isInteractive) setState(() => _isPressed = false);
       },
-      child: Transform.translate(
-        offset: isPressedNow ? const Offset(2.5, 2.5) : Offset.zero,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 100),
+        opacity: isPressedNow ? 0.8 : 1.0,
         child: Container(
           height: widget.height,
           width: double.infinity,
           decoration: BoxDecoration(
             color: buttonBg,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: borderColor,
-              width: 2.5,
+              color: Colors.white24,
+              width: 1.0,
             ),
-            boxShadow: [
-              if (!isPressedNow)
-                BoxShadow(
-                  color: borderColor,
-                  offset: const Offset(4, 4),
-                  blurRadius: 0,
-                ),
-            ],
           ),
           alignment: Alignment.center,
           child: Text(

@@ -44,19 +44,12 @@ class _LevelSelectViewState extends ConsumerState<LevelSelectView> {
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.surface,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: AppColors.headingDark,
-                          width: 2.0,
+                          color: Colors.white24,
+                          width: 1.0,
                         ),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: AppColors.headingDark,
-                            offset: Offset(2, 2),
-                            blurRadius: 0,
-                          ),
-                        ],
                       ),
                       child: const Icon(
                         Icons.arrow_back_ios_new_rounded,
@@ -125,14 +118,12 @@ class _LevelSelectViewState extends ConsumerState<LevelSelectView> {
     required bool isCurrent,
     required bool isLocked,
   }) {
-    Color cardBg = Colors.white;
-    Color borderColor = AppColors.headingDark;
+    Color cardBg = AppColors.surface;
     Widget content;
     bool isClickable = !isLocked;
-    Offset shadowOffset = const Offset(3, 3);
 
     if (isCompleted) {
-      cardBg = const Color(0xFFCAFFBF); // Pastel Green for completed
+      cardBg = const Color(0xFF10B981); // Vibrant Emerald Green
       content = Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -142,34 +133,31 @@ class _LevelSelectViewState extends ConsumerState<LevelSelectView> {
               fontFamily: 'BebasNeue',
               fontSize: 22,
               fontWeight: FontWeight.w900,
-              color: AppColors.headingDark,
+              color: AppColors.headingWhite,
             ),
           ),
           const SizedBox(height: 2),
           const Icon(
             Icons.check_circle_rounded,
             size: 14,
-            color: AppColors.headingDark,
+            color: AppColors.headingWhite,
           ),
         ],
       );
     } else if (isCurrent) {
-      cardBg = const Color(0xFFFFC6FF); // Pastel Pink for current level
-      shadowOffset = const Offset(4, 4);
+      cardBg = Colors.white;
       content = Text(
         '$levelNumber',
         style: const TextStyle(
           fontFamily: 'BebasNeue',
           fontSize: 26,
-          color: AppColors.headingDark,
+          color: AppColors.headingWhite,
           fontWeight: FontWeight.w900,
         ),
       );
     } else {
       // Locked state
-      cardBg = const Color(0xFFE2E2E6); // Light Grey
-      borderColor = AppColors.headingDark;
-      shadowOffset = Offset.zero; // flat/sunken
+      cardBg = AppColors.surface.withValues(alpha: 0.4);
       content = const Icon(
         Icons.lock_outline_rounded,
         size: 18,
@@ -196,17 +184,9 @@ class _LevelSelectViewState extends ConsumerState<LevelSelectView> {
           color: cardBg,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: borderColor,
-            width: isCurrent ? 2.5 : 2.0,
+            color: Colors.white24,
+            width: 1.0,
           ),
-          boxShadow: [
-            if (shadowOffset != Offset.zero)
-              BoxShadow(
-                color: borderColor,
-                offset: shadowOffset,
-                blurRadius: 0,
-              ),
-          ],
         ),
         alignment: Alignment.center,
         child: content,

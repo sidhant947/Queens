@@ -8,9 +8,4 @@ class SettingsViewModel extends StateNotifier<AppSettings> {
       : super(settingsService.getSettings());
 
   final SettingsService settingsService;
-
-  Future<void> setColorblindMode(bool enabled) async {
-    state = state.copyWith(colorblindMode: enabled);
-    await settingsService.saveSettings(state);
-  }
 }

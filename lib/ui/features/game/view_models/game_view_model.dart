@@ -342,7 +342,7 @@ class GameViewModel extends StateNotifier<GameViewModelState> {
     if (state.isRandomMode) {
       await progressRepository.addRandomLevelMoves(state.moveCount);
     } else {
-      await progressRepository.completeLevel(state.moveCount);
+      await progressRepository.completeLevel(level.levelNumber, state.moveCount);
       await progressRepository.recordLevelResult(
         level.levelNumber,
         state.moveCount,

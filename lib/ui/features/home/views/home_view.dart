@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:queens/ui/core/theme/app_colors.dart';
 import 'package:queens/ui/core/widgets/tangible_button.dart';
@@ -24,6 +25,40 @@ class _HomeViewState extends ConsumerState<HomeView> {
     Future.microtask(() => ref.read(homeViewModelProvider.notifier).loadProgress());
   }
 
+  Future<void> _launchUrl(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      throw Exception('Could not launch $url');
+    }
+  }
+
+  Widget _circleButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    double iconSize = 20,
+    Color? iconColor,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.white24,
+            width: 1.0,
+          ),
+        ),
+        child: Icon(
+          icon,
+          size: iconSize,
+          color: iconColor ?? AppColors.headingDark,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(homeViewModelProvider);
@@ -35,6 +70,46 @@ class _HomeViewState extends ConsumerState<HomeView> {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
           child: Column(
             children: [
+              // Top Action Row (App Bar)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _circleButton(
+                    icon: Icons.star_rounded,
+                    iconColor: const Color(0xFFFFCC00), // Bright Gold Yellow
+                    onTap: () => _launchUrl('https://github.com/sidhant947/Queens'),
+                  ),
+                  if (state.progress != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(
+                          color: Colors.white24,
+                          width: 1.0,
+                        ),
+                      ),
+                      child: Text(
+                        'LEVEL ${state.progress!.currentLevel}',
+                        style: const TextStyle(
+                          fontFamily: 'BebasNeue',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.headingDark,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    )
+                  else
+                    const SizedBox.shrink(),
+                  _circleButton(
+                    icon: Icons.favorite_rounded,
+                    iconColor: const Color(0xFFEF4444), // Bright Red
+                    onTap: () => _launchUrl('https://buymeacoffee.com/sidhant947'),
+                  ),
+                ],
+              ),
               const Spacer(flex: 3),
 
               // Tactile 3D Crown Logo
@@ -42,23 +117,16 @@ class _HomeViewState extends ConsumerState<HomeView> {
                 width: 100,
                 height: 100,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: AppColors.headingDark,
-                    width: 2.5,
+                    color: Colors.white24,
+                    width: 1.0,
                   ),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: AppColors.headingDark,
-                      offset: Offset(4, 4),
-                      blurRadius: 0,
-                    ),
-                  ],
                 ),
                 alignment: Alignment.center,
                 child: const CrownWidget(
-                  color: Color(0xFFE9C46A), // Designer crown gold
+                  color: Color(0xFFFFCC00), // Bright Gold Yellow
                   size: 56,
                 ),
               ),
@@ -71,7 +139,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
                   fontFamily: 'BebasNeue',
                   fontSize: 62,
                   fontWeight: FontWeight.w900,
-                  color: AppColors.headingDark,
+                  color: Color(0xFFFFCC00), // Bright Gold Yellow
                   letterSpacing: 1.0,
                 ),
               ),
@@ -87,42 +155,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
                 ),
               ),
 
-              const Spacer(flex: 2),
-
-              // Single line Level Panel (3D Pill style)
-              if (state.progress != null) ...[
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFC6FF), // Pastel Pink
-                    borderRadius: BorderRadius.circular(30),
-                    border: Border.all(
-                      color: AppColors.headingDark,
-                      width: 2.0,
-                    ),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: AppColors.headingDark,
-                        offset: Offset(2, 2),
-                        blurRadius: 0,
-                      ),
-                    ],
-                  ),
-                  child: Text(
-                    'Level ${state.progress!.currentLevel}',
-                    style: const TextStyle(
-                      fontFamily: 'BebasNeue',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.headingDark,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ),
-                const Spacer(flex: 3),
-              ] else ...[
-                const Spacer(flex: 5),
-              ],
+              const Spacer(flex: 4),
 
               // Play Button (Primary CTA)
               TangibleButton(
@@ -211,16 +244,9 @@ class _HomeViewState extends ConsumerState<HomeView> {
             color: AppColors.bg,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: AppColors.headingDark,
-              width: 2.5,
+              color: Colors.white24,
+              width: 1.0,
             ),
-            boxShadow: const [
-              BoxShadow(
-                color: AppColors.headingDark,
-                offset: Offset(6, 6),
-                blurRadius: 0,
-              ),
-            ],
           ),
           padding: const EdgeInsets.all(24),
           child: Column(

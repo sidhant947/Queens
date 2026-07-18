@@ -3,43 +3,44 @@ import 'package:material_ui/material_ui.dart';
 class AppColors {
   AppColors._();
 
-  // Core palette - Neobrutalist Theme
-  static const Color primary = Color(0xFFB5E2FA); 
-  static const Color accent = Color(0xFFCAFFBF); 
-  static const Color headingDark = Color(0xFF2B2D42); // Soft Charcoal Blue
-  static const Color headingWhite = Color(0xFF2B2D42); 
-  static const Color subtext = Color(0xFF6C757D); // Slate Grey
-  static const Color bg = Color(0xFFFAF6EE); // Warm Ivory Background
-  static const Color gridLines = Color(0xFFE2E2E6); // Light Grey
+  // Core palette - Charcoal + White Theme
+  static const Color primary = Color(0xFF2D2D2D); // Dark charcoal for primary buttons
+  static const Color accent = Color(0xFFFFFFFF); // White for accents
+  static const Color headingDark = Color(0xFFFFFFFF); // White text
+  static const Color headingWhite = Color(0xFF121212); // Charcoal background text
+  static const Color subtext = Color(0xFF888888); // Muted gray
+  static const Color bg = Color(0xFF121212); // Pure charcoal background
+  static const Color gridLines = Color(0xFF2D2D2D); // Dark gray for grid lines
+  static const Color surface = Color(0xFF1C1C1C); // Medium charcoal for cards/surfaces
 
   // Unified theme configs
-  static const Color darkBg = Color(0xFFFAF6EE);
-  static const Color darkSurface = Colors.white;
-  static const Color darkCard = Colors.white;
-  static const Color darkBorder = Color(0xFF2B2D42);
+  static const Color darkBg = Color(0xFF121212);
+  static const Color darkSurface = Color(0xFF1C1C1C);
+  static const Color darkCard = Color(0xFF1C1C1C);
+  static const Color darkBorder = Color(0xFF2D2D2D);
 
-  static const Color lightBg = Color(0xFFFAF6EE);
-  static const Color lightSurface = Colors.white;
-  static const Color lightCard = Colors.white;
-  static const Color lightBorder = Color(0xFF2B2D42);
+  static const Color lightBg = Color(0xFF121212);
+  static const Color lightSurface = Color(0xFF1C1C1C);
+  static const Color lightCard = Color(0xFF1C1C1C);
+  static const Color lightBorder = Color(0xFF2D2D2D);
 
-  // Designer-curated, highly distinctive, and harmonious premium color palette (expanded to 16 colors matching reference.png)
+  // 16 rich, vibrant, and highly distinctive modern colors that pop beautifully on charcoal background
   static const List<Color> queensColors = [
-    Color(0xFFA0D488), // Light Green
-    Color(0xFF57BBD4), // Cyan
-    Color(0xFFF5D377), // Pastel Yellow
-    Color(0xFF8379CF), // Lavender Purple
-    Color(0xFFD2778A), // Muted Rose/Pink-Red
-    Color(0xFF4CAF73), // Mid Green
-    Color(0xFFEFA56B), // Soft Orange
-    Color(0xFFA4C9F5), // Sky Blue
-    Color(0xFFEE9DEB), // Pink
-    Color(0xFFCAB05D), // Mustard
-    Color(0xFFD2C1EC), // Soft Lavender
-    Color(0xFFF7C3A1), // Soft Apricot
-    Color(0xFFB5CBB7), // Pale Sage
-    Color(0xFFFFF0A5), // Creamy Yellow
-    Color(0xFF80CED7), // Light Teal
-    Color(0xFFB38D97), // Muted Mauve
+    Color(0xFF0EA5E9), // Vibrant Sky Blue
+    Color(0xFF6366F1), // Vibrant Indigo
+    Color(0xFF10B981), // Vibrant Emerald Green
+    Color(0xFFF59E0B), // Rich Amber
+    Color(0xFFF43F5E), // Vibrant Rose Pink
+    Color(0xFF8B5CF6), // Vibrant Violet
+    Color(0xFF06B6D4), // Electric Cyan
+    Color(0xFF84CC16), // Bright Lime
+    Color(0xFFEAB308), // Rich Gold
+    Color(0xFFF97316), // Bright Orange
+    Color(0xFFD946EF), // Vibrant Fuchsia
+    Color(0xFF22C55E), // Forest Green
+    Color(0xFF7F9CF5), // Medium Lavender Blue
+    Color(0xFFEF4444), // Bright Red
+    Color(0xFF14B8A6), // Vibrant Teal
+    Color(0xFFA855F7), // Vibrant Purple
   ];
 }

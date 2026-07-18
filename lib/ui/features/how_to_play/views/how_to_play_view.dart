@@ -23,19 +23,12 @@ class HowToPlayView extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.surface,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: AppColors.headingDark,
-                          width: 2.0,
+                          color: Colors.white24,
+                          width: 1.0,
                         ),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: AppColors.headingDark,
-                            offset: Offset(2, 2),
-                            blurRadius: 0,
-                          ),
-                        ],
                       ),
                       child: const Icon(
                         Icons.arrow_back_ios_new_rounded,
@@ -75,7 +68,7 @@ class HowToPlayView extends StatelessWidget {
                       'Rows & Columns',
                       'There must be exactly one queen in each row and exactly one queen in each column.',
                       Icons.grid_on_rounded,
-                      const Color(0xFFF28482), // Coral Rose
+                      AppColors.surface,
                     ),
                     const SizedBox(height: 20),
                     _step(
@@ -84,7 +77,7 @@ class HowToPlayView extends StatelessWidget {
                       'Color Regions',
                       'Each colored region must contain exactly one queen.',
                       Icons.palette_rounded,
-                      const Color(0xFFF3C68F), // Warm Honey
+                      AppColors.surface,
                     ),
                     const SizedBox(height: 20),
                     _step(
@@ -93,7 +86,7 @@ class HowToPlayView extends StatelessWidget {
                       'No Touching',
                       'Queens cannot touch each other, even diagonally. Keep at least one cell of space between all queens.',
                       Icons.space_bar_rounded,
-                      const Color(0xFFCAFFBF), // Pastel Green
+                      AppColors.surface,
                     ),
                     const SizedBox(height: 20),
                     _step(
@@ -102,7 +95,7 @@ class HowToPlayView extends StatelessWidget {
                       'Tap to Mark',
                       'Tap a cell to cycle: [ Empty ➔ X ➔ Queen ♕ ]. Use X to mark cells where queens cannot go.',
                       Icons.touch_app_rounded,
-                      const Color(0xFFB5E2FA), // Pastel Blue
+                      AppColors.surface,
                     ),
                     const SizedBox(height: 32),
                   ],
@@ -128,19 +121,12 @@ class HowToPlayView extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.headingDark,
-          width: 2.5,
+          color: Colors.white24,
+          width: 1.0,
         ),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.headingDark,
-            offset: Offset(4, 4),
-            blurRadius: 0,
-          ),
-        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -152,8 +138,8 @@ class HowToPlayView extends StatelessWidget {
               color: iconBg,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: AppColors.headingDark,
-                width: 2.0,
+                color: Colors.white24,
+                width: 1.0,
               ),
             ),
             child: Center(child: Icon(icon, color: AppColors.headingDark, size: 20)),
