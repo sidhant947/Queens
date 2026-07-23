@@ -1,13 +1,14 @@
 import 'dart:math' as math;
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
 
 import 'package:queens/domain/use_cases/cell_rules.dart';
 import 'package:queens/ui/core/theme/app_colors.dart';
 import 'package:queens/ui/core/widgets/tangible_button.dart';
 import 'package:queens/ui/core/widgets/crown_widget.dart';
 import 'package:queens/ui/features/game/view_models/game_view_model.dart';
+import 'package:queens/ui/features/support/views/support_view.dart';
 import 'package:queens/ui/providers.dart';
 
 class GameView extends ConsumerStatefulWidget {
@@ -27,6 +28,8 @@ class GameView extends ConsumerStatefulWidget {
 }
 
 class _GameViewState extends ConsumerState<GameView> {
+  CellState? _dragTargetState;
+
   @override
   void initState() {
     super.initState();
@@ -186,8 +189,18 @@ class _GameViewState extends ConsumerState<GameView> {
                       builder: (context, constraints) {
                         final N = level.gridSize;
 
-                      return Column(
-                        children: List.generate(N, (r) {
+                      return GestureDetector(
+                        onPanStart: (details) {
+                          _handlePan(details.localPosition, constraints, N, isStart: true);
+                        },
+                        onPanUpdate: (details) {
+                          _handlePan(details.localPosition, constraints, N, isStart: false);
+                        },
+                        onPanEnd: (details) {
+                          _dragTargetState = null;
+                        },
+                        child: Column(
+                          children: List.generate(N, (r) {
                           return Expanded(
                             child: Row(
                               children: List.generate(N, (c) {
@@ -218,6 +231,7 @@ class _GameViewState extends ConsumerState<GameView> {
                             ),
                           );
                         }),
+                        ),
                       );
                     },
                   ),
@@ -245,6 +259,34 @@ class _GameViewState extends ConsumerState<GameView> {
     );
   }
 
+  void _handlePan(Offset localPosition, BoxConstraints constraints, int N, {bool isStart = false}) {
+    final cellWidth = constraints.maxWidth / N;
+    final cellHeight = constraints.maxHeight / N;
+
+    final c = (localPosition.dx / cellWidth).floor();
+    final r = (localPosition.dy / cellHeight).floor();
+
+    if (r >= 0 && r < N && c >= 0 && c < N) {
+      final stateProvider = ref.read(gameViewModelProvider);
+      final current = stateProvider.board[r][c];
+
+      if (isStart) {
+        if (current == CellState.empty) {
+          _dragTargetState = CellState.x;
+        } else if (current == CellState.x) {
+          _dragTargetState = CellState.empty;
+        } else {
+          _dragTargetState = null;
+        }
+      }
+
+      if (_dragTargetState != null && current != _dragTargetState) {
+        if (current == CellState.queen) return; // Never overwrite queens during a drag
+        ref.read(gameViewModelProvider.notifier).setCellState(r, c, _dragTargetState!);
+      }
+    }
+  }
+
   Widget _circleButton({
     required IconData icon,
     required VoidCallback onTap,
@@ -252,7 +294,10 @@ class _GameViewState extends ConsumerState<GameView> {
     bool enabled = true,
   }) {
     return GestureDetector(
-      onTap: enabled ? onTap : null,
+      onTap: enabled ? () {
+        HapticFeedback.lightImpact();
+        onTap();
+      } : null,
       child: Opacity(
         opacity: enabled ? 1.0 : 0.35,
         child: Container(
@@ -473,9 +518,13 @@ class _GameViewState extends ConsumerState<GameView> {
                         text: 'Buy Me a Coffee',
                         isSecondary: true,
                         height: 50,
-                        onPressed: () async {
-                          final url = Uri.parse('https://buymeacoffee.com/sidhant947');
-                          await launchUrl(url, mode: LaunchMode.externalApplication);
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const SupportView(),
+                            ),
+                          );
                         },
                       ),
                     ],
@@ -517,6 +566,8 @@ class _QueensCellState extends ConsumerState<QueensCell> with TickerProviderStat
   late Animation<double> _scaleAnimation;
   late AnimationController _shakeController;
   late Animation<double> _shakeAnimation;
+  late AnimationController _glowController;
+  late Animation<double> _glowAnimation;
 
   @override
   void initState() {
@@ -531,6 +582,15 @@ class _QueensCellState extends ConsumerState<QueensCell> with TickerProviderStat
     if (widget.cellState != CellState.empty) {
       _controller.value = 1.0;
     }
+
+    _glowController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+    
+    _glowAnimation = Tween<double>(begin: 4.0, end: 12.0).animate(
+      CurvedAnimation(parent: _glowController, curve: Curves.easeInOut),
+    );
 
     _shakeController = AnimationController(
       vsync: this,
@@ -564,6 +624,7 @@ class _QueensCellState extends ConsumerState<QueensCell> with TickerProviderStat
   void dispose() {
     _controller.dispose();
     _shakeController.dispose();
+    _glowController.dispose();
     super.dispose();
   }
 
@@ -623,6 +684,26 @@ class _QueensCellState extends ConsumerState<QueensCell> with TickerProviderStat
         child: Stack(
           alignment: Alignment.center,
           children: [
+            if (!widget.hasConflict)
+              AnimatedBuilder(
+                animation: _glowAnimation,
+                builder: (context, child) {
+                  return Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.white.withValues(alpha: 0.45),
+                          blurRadius: _glowAnimation.value,
+                          spreadRadius: _glowAnimation.value / 2,
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
             AnimatedContainer(
               duration: const Duration(milliseconds: 250),
               width: widget.hasConflict ? 32 : 0,

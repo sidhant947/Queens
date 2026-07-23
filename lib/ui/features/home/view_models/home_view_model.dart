@@ -25,9 +25,21 @@ class HomeViewModelState {
 
 class HomeViewModel extends StateNotifier<HomeViewModelState> {
   HomeViewModel({required this.progressRepository})
-      : super(const HomeViewModelState());
+      : super(const HomeViewModelState()) {
+    progressRepository.addListener(_onProgressChanged);
+  }
 
   final ProgressRepository progressRepository;
+
+  void _onProgressChanged() {
+    loadProgress();
+  }
+
+  @override
+  void dispose() {
+    progressRepository.removeListener(_onProgressChanged);
+    super.dispose();
+  }
 
   Future<void> loadProgress() async {
     state = state.copyWith(isLoading: true);

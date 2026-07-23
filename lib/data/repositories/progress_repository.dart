@@ -1,9 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:queens/domain/models/user_progress.dart';
 import 'package:queens/ui/features/game/view_models/game_view_model.dart';
 import '../services/hive_service.dart';
 
-class ProgressRepository {
-  ProgressRepository({required this._hiveService});
+class ProgressRepository extends ChangeNotifier {
+  ProgressRepository({required HiveService hiveService}) : _hiveService = hiveService; // ignore: prefer_initializing_formals
 
   final HiveService _hiveService;
   UserProgress? _cachedProgress;
@@ -17,6 +18,7 @@ class ProgressRepository {
   Future<void> saveProgress(UserProgress progress) async {
     _cachedProgress = progress;
     await _hiveService.saveProgress(progress);
+    notifyListeners();
   }
 
   Future<void> completeLevel(int levelNumber, int moves) async {
@@ -68,5 +70,6 @@ class ProgressRepository {
   Future<void> resetProgress() async {
     _cachedProgress = null;
     await _hiveService.clearProgress();
+    notifyListeners();
   }
 }

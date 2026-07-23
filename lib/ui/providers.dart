@@ -16,7 +16,7 @@ final settingsServiceProvider = Provider<SettingsService>((ref) {
   throw UnimplementedError('Must be overridden in main');
 });
 
-final progressRepositoryProvider = Provider<ProgressRepository>((ref) {
+final progressRepositoryProvider = ChangeNotifierProvider<ProgressRepository>((ref) {
   final hiveService = ref.watch(hiveServiceProvider);
   return ProgressRepository(hiveService: hiveService);
 });
@@ -27,14 +27,14 @@ final levelGeneratorProvider = Provider<LevelGenerator>((ref) {
 
 final homeViewModelProvider =
     StateNotifierProvider<HomeViewModel, HomeViewModelState>((ref) {
-      final progressRepository = ref.watch(progressRepositoryProvider);
+      final progressRepository = ref.read(progressRepositoryProvider);
       return HomeViewModel(progressRepository: progressRepository);
     });
 
 final gameViewModelProvider =
     StateNotifierProvider.autoDispose<GameViewModel, GameViewModelState>((ref) {
-      final progressRepository = ref.watch(progressRepositoryProvider);
-      final levelGenerator = ref.watch(levelGeneratorProvider);
+      final progressRepository = ref.read(progressRepositoryProvider);
+      final levelGenerator = ref.read(levelGeneratorProvider);
       return GameViewModel(
         progressRepository: progressRepository,
         levelGenerator: levelGenerator,

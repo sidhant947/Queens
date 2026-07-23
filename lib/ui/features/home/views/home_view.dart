@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
 
 import 'package:queens/ui/core/theme/app_colors.dart';
 import 'package:queens/ui/core/widgets/tangible_button.dart';
@@ -9,6 +10,7 @@ import 'package:queens/ui/features/game/views/game_view.dart';
 import 'package:queens/ui/features/how_to_play/views/how_to_play_view.dart';
 import 'package:queens/ui/features/level_select/views/level_select_view.dart';
 import 'package:queens/ui/features/settings/views/settings_view.dart';
+import 'package:queens/ui/features/support/views/support_view.dart';
 import 'package:queens/ui/providers.dart';
 
 class HomeView extends ConsumerStatefulWidget {
@@ -18,11 +20,28 @@ class HomeView extends ConsumerStatefulWidget {
   ConsumerState<HomeView> createState() => _HomeViewState();
 }
 
-class _HomeViewState extends ConsumerState<HomeView> {
+class _HomeViewState extends ConsumerState<HomeView> with SingleTickerProviderStateMixin {
+  late AnimationController _glowController;
+  late Animation<double> _glowAnimation;
   @override
   void initState() {
     super.initState();
     Future.microtask(() => ref.read(homeViewModelProvider.notifier).loadProgress());
+
+    _glowController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+    
+    _glowAnimation = Tween<double>(begin: 8.0, end: 20.0).animate(
+      CurvedAnimation(parent: _glowController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _glowController.dispose();
+    super.dispose();
   }
 
   Future<void> _launchUrl(String urlString) async {
@@ -39,7 +58,10 @@ class _HomeViewState extends ConsumerState<HomeView> {
     Color? iconColor,
   }) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
@@ -106,7 +128,12 @@ class _HomeViewState extends ConsumerState<HomeView> {
                   _circleButton(
                     icon: Icons.favorite_rounded,
                     iconColor: const Color(0xFFEF4444), // Bright Red
-                    onTap: () => _launchUrl('https://buymeacoffee.com/sidhant947'),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SupportView(),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -125,9 +152,33 @@ class _HomeViewState extends ConsumerState<HomeView> {
                   ),
                 ),
                 alignment: Alignment.center,
-                child: const CrownWidget(
-                  color: Color(0xFFFFCC00), // Bright Gold Yellow
-                  size: 56,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    AnimatedBuilder(
+                      animation: _glowAnimation,
+                      builder: (context, child) {
+                        return Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFFFCC00).withValues(alpha: 0.35),
+                                blurRadius: _glowAnimation.value,
+                                spreadRadius: _glowAnimation.value / 2,
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                    const CrownWidget(
+                      color: Color(0xFFFFCC00), // Bright Gold Yellow
+                      size: 56,
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 28),

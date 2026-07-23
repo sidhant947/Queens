@@ -24,23 +24,19 @@ class AppColors {
   static const Color lightCard = Color(0xFF1C1C1C);
   static const Color lightBorder = Color(0xFF2D2D2D);
 
-  // 16 rich, vibrant, and highly distinctive modern colors that pop beautifully on charcoal background
+  // Exactly 12 maximally distinct colors for the 12x12 grid limit
   static const List<Color> queensColors = [
-    Color(0xFF0EA5E9), // Vibrant Sky Blue
-    Color(0xFF6366F1), // Vibrant Indigo
-    Color(0xFF10B981), // Vibrant Emerald Green
-    Color(0xFFF59E0B), // Rich Amber
-    Color(0xFFF43F5E), // Vibrant Rose Pink
-    Color(0xFF8B5CF6), // Vibrant Violet
-    Color(0xFF06B6D4), // Electric Cyan
-    Color(0xFF84CC16), // Bright Lime
-    Color(0xFFEAB308), // Rich Gold
-    Color(0xFFF97316), // Bright Orange
-    Color(0xFFD946EF), // Vibrant Fuchsia
-    Color(0xFF22C55E), // Forest Green
-    Color(0xFF7F9CF5), // Medium Lavender Blue
-    Color(0xFFEF4444), // Bright Red
-    Color(0xFF14B8A6), // Vibrant Teal
-    Color(0xFFA855F7), // Vibrant Purple
+    Color(0xFFE53935), // 1. Red
+    Color(0xFFFF9800), // 2. Orange
+    Color(0xFFFFEB3B), // 3. Yellow
+    Color(0xFF8BC34A), // 4. Lime
+    Color(0xFF4CAF50), // 5. Green
+    Color(0xFF00BCD4), // 6. Cyan
+    Color(0xFF2196F3), // 7. Blue
+    Color(0xFF3F51B5), // 8. Indigo
+    Color(0xFF9C27B0), // 9. Purple
+    Color(0xFFE91E63), // 10. Pink
+    Color(0xFF795548), // 11. Brown
+    Color(0xFF607D8B), // 12. Blue Grey
   ];
 }

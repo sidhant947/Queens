@@ -280,6 +280,45 @@ class GameViewModel extends StateNotifier<GameViewModelState> {
     _persistInProgress();
   }
 
+  void setCellState(int r, int c, CellState next) {
+    final level = state.level;
+    if (state.isComplete || level == null) return;
+
+    final current = state.board[r][c];
+    if (current == next) return;
+
+    _pushUndo();
+
+    final n = level.gridSize;
+    final newBoard = List.generate(
+      n,
+      (row) => List<CellState>.from(state.board[row]),
+    );
+
+    newBoard[r][c] = next;
+
+    final newConflicts = CellRules.computeConflicts(newBoard, level);
+    final isComplete = CellRules.isComplete(newBoard, level);
+
+    if (isComplete) {
+      HapticFeedback.heavyImpact();
+      _stopTimer();
+    } else {
+      HapticFeedback.selectionClick();
+    }
+
+    state = state.copyWith(
+      board: newBoard,
+      conflicts: newConflicts,
+      moveCount: state.moveCount,
+      isComplete: isComplete,
+      canUndo: _undoStack.isNotEmpty,
+      clearHint: true,
+    );
+
+    _persistInProgress();
+  }
+
   void _pushUndo() {
     final snapshotBoard = state.board
         .map((row) => List<CellState>.from(row))

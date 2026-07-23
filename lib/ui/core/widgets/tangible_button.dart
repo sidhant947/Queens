@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter/services.dart';
 import 'package:queens/ui/core/theme/app_colors.dart';
 
 class TangibleButton extends StatefulWidget {
@@ -35,7 +36,10 @@ class _TangibleButtonState extends State<TangibleButton> {
 
     return GestureDetector(
       onTapDown: (_) {
-        if (isInteractive) setState(() => _isPressed = true);
+        if (isInteractive) {
+          setState(() => _isPressed = true);
+          HapticFeedback.lightImpact();
+        }
       },
       onTapUp: (_) {
         if (isInteractive) {
