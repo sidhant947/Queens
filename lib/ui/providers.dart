@@ -28,7 +28,11 @@ final levelGeneratorProvider = Provider<LevelGenerator>((ref) {
 final homeViewModelProvider =
     StateNotifierProvider<HomeViewModel, HomeViewModelState>((ref) {
       final progressRepository = ref.read(progressRepositoryProvider);
-      return HomeViewModel(progressRepository: progressRepository);
+      final levelGenerator = ref.read(levelGeneratorProvider);
+      return HomeViewModel(
+        progressRepository: progressRepository,
+        levelGenerator: levelGenerator,
+      );
     });
 
 final gameViewModelProvider =

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:queens/data/repositories/progress_repository.dart';
 import 'package:queens/domain/models/user_progress.dart';
+import 'package:queens/domain/use_cases/level_generator.dart';
 
 class HomeViewModelState {
   const HomeViewModelState({
@@ -24,12 +25,15 @@ class HomeViewModelState {
 }
 
 class HomeViewModel extends StateNotifier<HomeViewModelState> {
-  HomeViewModel({required this.progressRepository})
-      : super(const HomeViewModelState()) {
+  HomeViewModel({
+    required this.progressRepository,
+    required this.levelGenerator,
+  }) : super(const HomeViewModelState()) {
     progressRepository.addListener(_onProgressChanged);
   }
 
   final ProgressRepository progressRepository;
+  final LevelGenerator levelGenerator;
 
   void _onProgressChanged() {
     loadProgress();
@@ -46,6 +50,7 @@ class HomeViewModel extends StateNotifier<HomeViewModelState> {
     try {
       final progress = await progressRepository.getProgress();
       state = state.copyWith(progress: progress, isLoading: false);
+      levelGenerator.pregenerateAround(progress.currentLevel, range: 5);
     } catch (e) {
       state = state.copyWith(isLoading: false);
     }

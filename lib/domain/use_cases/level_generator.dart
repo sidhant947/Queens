@@ -30,9 +30,10 @@ class LevelGenerator {
     return _generateLevelWithSeed(levelNumber, gridSize, random);
   }
 
-  void _pregenerateNext(int startLevel) {
-    for (int i = 0; i < 3; i++) {
-      final levelNumber = startLevel + i;
+  void pregenerateAround(int currentLevel, {int range = 5}) {
+    for (int i = 0; i <= range; i++) {
+      final levelNumber = currentLevel + i;
+      if (levelNumber < 1) continue;
       if (!_cache.containsKey(levelNumber) && !_generating.contains(levelNumber)) {
         _generating.add(levelNumber);
         debugPrint('⏳ [LevelGenerator] Spawning isolate to pre-generate level $levelNumber...');
@@ -46,6 +47,10 @@ class LevelGenerator {
         });
       }
     }
+  }
+
+  void _pregenerateNext(int startLevel) {
+    pregenerateAround(startLevel, range: 3);
   }
 
   static GameLevel _isolateGenerate(int levelNumber) {
@@ -395,12 +400,12 @@ class LevelGenerator {
     }
 
     double colorDistance(Color a, Color b) {
-      final r1 = (a.value >> 16) & 0xFF;
-      final g1 = (a.value >> 8) & 0xFF;
-      final b1 = a.value & 0xFF;
-      final r2 = (b.value >> 16) & 0xFF;
-      final g2 = (b.value >> 8) & 0xFF;
-      final b2 = b.value & 0xFF;
+      final r1 = (a.r * 255).round();
+      final g1 = (a.g * 255).round();
+      final b1 = (a.b * 255).round();
+      final r2 = (b.r * 255).round();
+      final g2 = (b.g * 255).round();
+      final b2 = (b.b * 255).round();
       return sqrt((r1 - r2) * (r1 - r2) + (g1 - g2) * (g1 - g2) + (b1 - b2) * (b1 - b2));
     }
 
