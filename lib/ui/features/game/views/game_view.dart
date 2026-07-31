@@ -209,11 +209,32 @@ class _GameViewState extends ConsumerState<GameView> {
                                 final regionIndex = level.colorRegions[r][c];
                                 final regionColor = level.regionColors[regionIndex];
 
-                                // Check if cell is blocked (auto-X)
-                                final blocked = CellRules.isCellBlocked(
-                                    r, c, state.board, level);
+                                final settings = ref.watch(settingsProvider);
+                                final blocked = !settings.isAutoCrossDisabled &&
+                                    CellRules.isCellBlocked(r, c, state.board, level);
                                 final isHinted =
                                     state.hintCell == r * N + c;
+
+                                final isColorblindMode = settings.isColorblindMode;
+                                Border? regionBorder;
+                                if (isColorblindMode) {
+                                  final topDiff = r == 0 || level.colorRegions[r - 1][c] != regionIndex;
+                                  final bottomDiff = r == N - 1 || level.colorRegions[r + 1][c] != regionIndex;
+                                  final leftDiff = c == 0 || level.colorRegions[r][c - 1] != regionIndex;
+                                  final rightDiff = c == N - 1 || level.colorRegions[r][c + 1] != regionIndex;
+
+                                  const borderSide = BorderSide(
+                                    color: Colors.black,
+                                    width: 3.0,
+                                  );
+
+                                  regionBorder = Border(
+                                    top: topDiff ? borderSide : BorderSide.none,
+                                    bottom: bottomDiff ? borderSide : BorderSide.none,
+                                    left: leftDiff ? borderSide : BorderSide.none,
+                                    right: rightDiff ? borderSide : BorderSide.none,
+                                  );
+                                }
 
                                 return Expanded(
                                   child: QueensCell(
@@ -222,6 +243,7 @@ class _GameViewState extends ConsumerState<GameView> {
                                     isAutoBlocked: blocked,
                                     isHinted: isHinted,
                                     regionColor: regionColor,
+                                    regionBorder: regionBorder,
                                     onTap: () {
                                       ref.read(gameViewModelProvider.notifier).toggleCell(r, c);
                                     },
@@ -547,6 +569,7 @@ class QueensCell extends ConsumerStatefulWidget {
     required this.isAutoBlocked,
     required this.isHinted,
     required this.regionColor,
+    this.regionBorder,
     required this.onTap,
   });
 
@@ -555,6 +578,7 @@ class QueensCell extends ConsumerStatefulWidget {
   final bool isAutoBlocked;
   final bool isHinted;
   final Color regionColor;
+  final Border? regionBorder;
   final VoidCallback onTap;
 
   @override
@@ -600,7 +624,7 @@ class _QueensCellState extends ConsumerState<QueensCell> with TickerProviderStat
       TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: 5.0), weight: 1),
       TweenSequenceItem(tween: Tween<double>(begin: 5.0, end: -5.0), weight: 2),
       TweenSequenceItem(tween: Tween<double>(begin: -5.0, end: 3.5), weight: 2),
-      TweenSequenceItem(tween: Tween<double>(begin: 3.5, end: -3.5), weight: 2),
+      TweenSequenceItem(tween: Tween<double>(begin: -3.5, end: -3.5), weight: 2),
       TweenSequenceItem(tween: Tween<double>(begin: -3.5, end: 0.0), weight: 1),
     ]).animate(CurvedAnimation(parent: _shakeController, curve: Curves.easeInOut));
   }
@@ -645,7 +669,7 @@ class _QueensCellState extends ConsumerState<QueensCell> with TickerProviderStat
           margin: const EdgeInsets.all(1.5),
           decoration: BoxDecoration(
             color: widget.regionColor,
-            borderRadius: BorderRadius.circular(4),
+            border: widget.regionBorder,
           ),
           alignment: Alignment.center,
           child: Stack(
@@ -726,7 +750,14 @@ class _QueensCellState extends ConsumerState<QueensCell> with TickerProviderStat
         child: Icon(
           Icons.close_rounded,
           size: 22,
-          color: activeIconColor, // Fully opaque white for maximum contrast
+          color: activeIconColor,
+          shadows: const [
+            Shadow(
+              color: Colors.black54,
+              blurRadius: 4.0,
+              offset: Offset(0, 1),
+            ),
+          ],
         ),
       );
     } else if (widget.isAutoBlocked) {
@@ -736,7 +767,14 @@ class _QueensCellState extends ConsumerState<QueensCell> with TickerProviderStat
         child: Icon(
           Icons.close_rounded,
           size: 16,
-          color: activeIconColor.withValues(alpha: 0.55), // Increased opacity for helpers
+          color: activeIconColor.withValues(alpha: 0.75),
+          shadows: const [
+            Shadow(
+              color: Colors.black45,
+              blurRadius: 3.0,
+              offset: Offset(0, 1),
+            ),
+          ],
         ),
       );
     }

@@ -63,6 +63,116 @@ class SettingsView extends ConsumerWidget {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(24, 16, 28, 28),
                 children: [
+                  Builder(
+                    builder: (context) {
+                      final settings = ref.watch(settingsProvider);
+                      final isON = settings.isColorblindMode;
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.white24, width: 1.0),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: const [
+                                  Text(
+                                    'COLORBLIND MODE',
+                                    style: TextStyle(
+                                      fontFamily: 'BebasNeue',
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.headingDark,
+                                      letterSpacing: 1.0,
+                                    ),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    'Add region borders to assist color perception',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.subtext,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Switch.adaptive(
+                              value: isON,
+                              onChanged: (val) => ref
+                                  .read(settingsProvider.notifier)
+                                  .toggleColorblindMode(val),
+                              activeThumbColor: AppColors.headingDark,
+                              activeTrackColor: AppColors.primary,
+                              inactiveThumbColor: AppColors.subtext,
+                              inactiveTrackColor: AppColors.bg,
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  Builder(
+                    builder: (context) {
+                      final settings = ref.watch(settingsProvider);
+                      final isAutoCrossDisabled = settings.isAutoCrossDisabled;
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.white24, width: 1.0),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: const [
+                                  Text(
+                                    'DISABLE AUTO-CROSS',
+                                    style: TextStyle(
+                                      fontFamily: 'BebasNeue',
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.headingDark,
+                                      letterSpacing: 1.0,
+                                    ),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    'Stop automatic X marks when placing a queen',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.subtext,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Switch.adaptive(
+                              value: isAutoCrossDisabled,
+                              onChanged: (val) => ref
+                                  .read(settingsProvider.notifier)
+                                  .toggleAutoCrossDisabled(val),
+                              activeThumbColor: AppColors.headingDark,
+                              activeTrackColor: AppColors.primary,
+                              inactiveThumbColor: AppColors.subtext,
+                              inactiveTrackColor: AppColors.bg,
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                   TangibleButton(
                     text: 'Reset Progress',
                     isSecondary: true,
