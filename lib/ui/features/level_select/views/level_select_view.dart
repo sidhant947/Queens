@@ -168,7 +168,7 @@ class _LevelSelectViewState extends ConsumerState<LevelSelectView> {
     return GestureDetector(
       onTap: isClickable
           ? () async {
-              ref.read(levelGeneratorProvider).pregenerateAround(levelNumber, range: 3);
+              ref.read(levelGeneratorProvider).pregenerateAround(levelNumber, range: 1);
               await Navigator.push(
                 context,
                 MaterialPageRoute(

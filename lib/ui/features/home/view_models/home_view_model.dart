@@ -50,7 +50,7 @@ class HomeViewModel extends StateNotifier<HomeViewModelState> {
     try {
       final progress = await progressRepository.getProgress();
       state = state.copyWith(progress: progress, isLoading: false);
-      levelGenerator.pregenerateAround(progress.currentLevel, range: 5);
+      levelGenerator.pregenerateAround(progress.currentLevel, range: 1);
     } catch (e) {
       state = state.copyWith(isLoading: false);
     }

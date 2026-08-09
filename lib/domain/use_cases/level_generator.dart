@@ -1,6 +1,6 @@
 import 'dart:math';
 import 'package:flutter/foundation.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:material_ui/material_ui.dart' hide Random;
 
 import 'package:queens/domain/models/game_level.dart';
 import 'package:queens/ui/core/theme/app_colors.dart';
@@ -30,7 +30,7 @@ class LevelGenerator {
     return _generateLevelWithSeed(levelNumber, gridSize, random);
   }
 
-  void pregenerateAround(int currentLevel, {int range = 5}) {
+  void pregenerateAround(int currentLevel, {int range = 1}) {
     for (int i = 0; i <= range; i++) {
       final levelNumber = currentLevel + i;
       if (levelNumber < 1) continue;
@@ -50,7 +50,7 @@ class LevelGenerator {
   }
 
   void _pregenerateNext(int startLevel) {
-    pregenerateAround(startLevel, range: 3);
+    pregenerateAround(startLevel, range: 1);
   }
 
   static GameLevel _isolateGenerate(int levelNumber) {

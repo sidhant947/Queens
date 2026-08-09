@@ -416,145 +416,157 @@ class _GameViewState extends ConsumerState<GameView> {
       barrierDismissible: false,
       builder: (_) => Dialog(
         backgroundColor: Colors.transparent,
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppColors.bg,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: Colors.white24,
-              width: 1.0,
-            ),
-          ),
-          padding: const EdgeInsets.all(28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppColors.surface, // Charcoal surface background
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white24,
-                    width: 1.0,
-                  ),
-                ),
-                child: const Icon(
-                  Icons.emoji_events_rounded,
-                  color: AppColors.headingDark,
-                  size: 56,
+        child: Stack(
+          alignment: Alignment.topRight,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.bg,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Colors.white24,
+                  width: 1.0,
                 ),
               ),
-              const SizedBox(height: 20),
-              const FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  'LEVEL COMPLETE!',
-                  style: TextStyle(
-                    fontFamily: 'BebasNeue',
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.headingDark,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  state.isRandomMode
-                      ? 'You solved this ${state.level?.gridSize}x${state.level?.gridSize} puzzle in ${state.moveCount} moves and ${_formatTime(state.elapsedSeconds)}.'
-                      : 'You solved Level ${widget.levelNumber} in ${state.moveCount} moves and ${_formatTime(state.elapsedSeconds)}.',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontFamily: 'BebasNeue',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.subtext,
-                    height: 1.2,
-                  ),
-                ),
-              ),
-              if (isNewBest && !state.isRandomMode) ...[
-                const SizedBox(height: 12),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border:
-                        Border.all(color: Colors.white24, width: 1.0),
-                  ),
-                  child: const Text(
-                    '★ NEW BEST!',
-                    style: TextStyle(
-                      fontFamily: 'BebasNeue',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.headingWhite,
-                      letterSpacing: 1.0,
+              padding: const EdgeInsets.all(28),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white24,
+                        width: 1.0,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.emoji_events_rounded,
+                      color: AppColors.headingDark,
+                      size: 56,
                     ),
                   ),
-                ),
-              ],
-              const SizedBox(height: 28),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: SizedBox(
-                  width: 220,
-                  child: Column(
-                    children: [
-                      TangibleButton(
-                        text: state.isRandomMode ? 'Play Again' : 'Next Level',
-                        height: 50,
-                        onPressed: () {
-                          // Progress was already recorded in _onLevelComplete.
-                          final notifier = ref.read(gameViewModelProvider.notifier);
-                          Navigator.pop(context);
-                          if (state.isRandomMode) {
-                            notifier.loadRandomLevel(state.randomDifficulty ?? 'Easy');
-                          } else {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => GameView(levelNumber: widget.levelNumber + 1),
-                              ),
-                            );
-                          }
-                        },
+                  const SizedBox(height: 20),
+                  const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      'LEVEL COMPLETE!',
+                      style: TextStyle(
+                        fontFamily: 'BebasNeue',
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.headingDark,
+                        letterSpacing: 1.0,
                       ),
-                      const SizedBox(height: 14),
-                      TangibleButton(
-                        text: 'Home',
-                        isSecondary: true,
-                        height: 50,
-                        onPressed: () {
-                          Navigator.pop(context);
-                          Navigator.pop(context);
-                        },
-                      ),
-                      const SizedBox(height: 14),
-                      TangibleButton(
-                        text: 'Buy Me a Coffee',
-                        isSecondary: true,
-                        height: 50,
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const SupportView(),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 8),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      state.isRandomMode
+                          ? 'You solved this ${state.level?.gridSize}x${state.level?.gridSize} puzzle in ${state.moveCount} moves and ${_formatTime(state.elapsedSeconds)}.'
+                          : 'You solved Level ${widget.levelNumber} in ${state.moveCount} moves and ${_formatTime(state.elapsedSeconds)}.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: 'BebasNeue',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.subtext,
+                        height: 1.2,
+                      ),
+                    ),
+                  ),
+                  if (isNewBest && !state.isRandomMode) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border:
+                            Border.all(color: Colors.white24, width: 1.0),
+                      ),
+                      child: const Text(
+                        '★ NEW BEST!',
+                        style: TextStyle(
+                          fontFamily: 'BebasNeue',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.headingWhite,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 28),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: SizedBox(
+                      width: 220,
+                      child: Column(
+                        children: [
+                          TangibleButton(
+                            text: state.isRandomMode ? 'Play Again' : 'Next Level',
+                            height: 50,
+                            onPressed: () {
+                              final notifier = ref.read(gameViewModelProvider.notifier);
+                              Navigator.pop(context);
+                              if (state.isRandomMode) {
+                                notifier.loadRandomLevel(state.randomDifficulty ?? 'Easy');
+                              } else {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => GameView(levelNumber: widget.levelNumber + 1),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 14),
+                          TangibleButton(
+                            text: 'Home',
+                            isSecondary: true,
+                            height: 50,
+                            onPressed: () {
+                              Navigator.pop(context);
+                              Navigator.pop(context);
+                            },
+                          ),
+                          const SizedBox(height: 14),
+                          TangibleButton(
+                            text: 'Buy Me a Coffee',
+                            isSecondary: true,
+                            height: 50,
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const SupportView(),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+            Positioned(
+              top: 12,
+              right: 12,
+              child: IconButton(
+                icon: const Icon(Icons.close_rounded, color: AppColors.headingDark),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ],
         ),
       ),
     );
