@@ -714,6 +714,12 @@ class _QueensCellState extends ConsumerState<QueensCell> with TickerProviderStat
   Widget _buildContent() {
     const Color activeIconColor = AppColors.headingDark;
 
+    // A white cross washes out on light regions such as yellow, so flip the
+    // marker (and its drop shadow) to dark on those cells.
+    final bool onLightRegion = widget.regionColor.computeLuminance() > 0.6;
+    final Color crossColor =
+        onLightRegion ? AppColors.headingWhite : activeIconColor;
+
     if (widget.cellState == CellState.queen) {
       return ScaleTransition(
         scale: _scaleAnimation,
@@ -762,12 +768,12 @@ class _QueensCellState extends ConsumerState<QueensCell> with TickerProviderStat
         child: Icon(
           Icons.close_rounded,
           size: 22,
-          color: activeIconColor,
-          shadows: const [
+          color: crossColor,
+          shadows: [
             Shadow(
-              color: Colors.black54,
+              color: onLightRegion ? Colors.white54 : Colors.black54,
               blurRadius: 4.0,
-              offset: Offset(0, 1),
+              offset: const Offset(0, 1),
             ),
           ],
         ),
@@ -779,12 +785,12 @@ class _QueensCellState extends ConsumerState<QueensCell> with TickerProviderStat
         child: Icon(
           Icons.close_rounded,
           size: 16,
-          color: activeIconColor.withValues(alpha: 0.75),
-          shadows: const [
+          color: crossColor.withValues(alpha: 0.75),
+          shadows: [
             Shadow(
-              color: Colors.black45,
+              color: onLightRegion ? Colors.white54 : Colors.black45,
               blurRadius: 3.0,
-              offset: Offset(0, 1),
+              offset: const Offset(0, 1),
             ),
           ],
         ),
