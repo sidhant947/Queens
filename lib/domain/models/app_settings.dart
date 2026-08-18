@@ -27,21 +27,25 @@ class AppSettings {
     this.isColorblindMode = false,
     this.isAutoCrossDisabled = false,
     this.crownSkin = CrownSkin.classic,
+    this.isHintEnabled = false,
   });
 
   final bool isColorblindMode;
   final bool isAutoCrossDisabled;
   final CrownSkin crownSkin;
+  final bool isHintEnabled;
 
   AppSettings copyWith({
     bool? isColorblindMode,
     bool? isAutoCrossDisabled,
     CrownSkin? crownSkin,
+    bool? isHintEnabled,
   }) {
     return AppSettings(
       isColorblindMode: isColorblindMode ?? this.isColorblindMode,
       isAutoCrossDisabled: isAutoCrossDisabled ?? this.isAutoCrossDisabled,
       crownSkin: crownSkin ?? this.crownSkin,
+      isHintEnabled: isHintEnabled ?? this.isHintEnabled,
     );
   }
 }

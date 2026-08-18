@@ -10,7 +10,6 @@ import 'package:queens/ui/features/game/views/game_view.dart';
 import 'package:queens/ui/features/how_to_play/views/how_to_play_view.dart';
 import 'package:queens/ui/features/level_select/views/level_select_view.dart';
 import 'package:queens/ui/features/settings/views/settings_view.dart';
-import 'package:queens/ui/features/support/views/support_view.dart';
 import 'package:queens/ui/providers.dart';
 
 class HomeView extends ConsumerStatefulWidget {
@@ -127,13 +126,8 @@ class _HomeViewState extends ConsumerState<HomeView> with SingleTickerProviderSt
                     const SizedBox.shrink(),
                   _circleButton(
                     icon: Icons.favorite_rounded,
-                    iconColor: const Color(0xFFEF4444), // Bright Red
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SupportView(),
-                      ),
-                    ),
+                    iconColor: const Color(0xFFEF4444),
+                    onTap: _openKoFiUrl,
                   ),
                 ],
               ),
@@ -286,6 +280,19 @@ class _HomeViewState extends ConsumerState<HomeView> with SingleTickerProviderSt
     );
   }
 
+  Future<void> _openKoFiUrl() async {
+    final Uri uri = Uri.parse('https://ko-fi.com/sidhant947');
+    try {
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        await launchUrl(uri, mode: LaunchMode.platformDefault);
+      }
+    } catch (_) {
+      try {
+        await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+      } catch (_) {}
+    }
+  }
+
   void _showDifficultyDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -362,11 +369,14 @@ class _HomeViewState extends ConsumerState<HomeView> with SingleTickerProviderSt
                     spacing: 12,
                     runSpacing: 12,
                     children: [
-                      sizeButton('5x5', 'Easy'),
-                      sizeButton('6x6', 'Medium'),
-                      sizeButton('7x7', 'Hard'),
-                      sizeButton('8x8', 'Super Hard'),
-                      sizeButton('9x9', 'Super Duper Hard'),
+                      sizeButton('5x5', '5x5'),
+                      sizeButton('6x6', '6x6'),
+                      sizeButton('7x7', '7x7'),
+                      sizeButton('8x8', '8x8'),
+                      sizeButton('9x9', '9x9'),
+                      sizeButton('10x10', '10x10'),
+                      sizeButton('11x11', '11x11'),
+                      sizeButton('12x12', '12x12'),
                     ],
                   );
                 },

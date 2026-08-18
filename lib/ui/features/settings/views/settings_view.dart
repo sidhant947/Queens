@@ -277,6 +277,61 @@ class SettingsView extends ConsumerWidget {
                       );
                     },
                   ),
+                  Builder(
+                    builder: (context) {
+                      final settings = ref.watch(settingsProvider);
+                      final isHintEnabled = settings.isHintEnabled;
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.white24, width: 1.0),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: const [
+                                  Text(
+                                    'ENABLE HINTS',
+                                    style: TextStyle(
+                                      fontFamily: 'BebasNeue',
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.headingDark,
+                                      letterSpacing: 1.0,
+                                    ),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    'Show in-game hint button (up to 2 hints per puzzle)',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.subtext,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Switch.adaptive(
+                              value: isHintEnabled,
+                              onChanged: (val) => ref
+                                  .read(settingsProvider.notifier)
+                                  .toggleHintEnabled(val),
+                              activeThumbColor: AppColors.headingDark,
+                              activeTrackColor: AppColors.primary,
+                              inactiveThumbColor: AppColors.subtext,
+                              inactiveTrackColor: AppColors.bg,
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                   TangibleButton(
                     text: 'Reset Progress',
                     isSecondary: true,

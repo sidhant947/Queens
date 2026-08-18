@@ -23,4 +23,9 @@ class SettingsViewModel extends StateNotifier<AppSettings> {
     state = state.copyWith(crownSkin: skin);
     await settingsService.saveSettings(state);
   }
+
+  Future<void> toggleHintEnabled(bool value) async {
+    state = state.copyWith(isHintEnabled: value);
+    await settingsService.saveSettings(state);
+  }
 }

@@ -12,14 +12,11 @@ class LevelGenerator {
   GameLevel generate(int levelNumber) {
     GameLevel level;
     if (_cache.containsKey(levelNumber)) {
-      debugPrint('⚡ [LevelGenerator] Cache HIT for level $levelNumber. Loading instantly.');
       level = _cache.remove(levelNumber)!;
     } else {
-      debugPrint('🐌 [LevelGenerator] Cache MISS for level $levelNumber. Generating on UI thread.');
       level = _generateInternal(levelNumber);
     }
     _generating.remove(levelNumber);
-    
     _pregenerateNext(levelNumber + 1);
     return level;
   }
@@ -27,14 +24,11 @@ class LevelGenerator {
   Future<GameLevel> generateAsync(int levelNumber) async {
     GameLevel level;
     if (_cache.containsKey(levelNumber)) {
-      debugPrint('⚡ [LevelGenerator] Cache HIT for level $levelNumber. Loading instantly.');
       level = _cache.remove(levelNumber)!;
     } else {
-      debugPrint('🐌 [LevelGenerator] Cache MISS for level $levelNumber. Spawning isolate.');
       level = await compute(_isolateGenerate, levelNumber);
     }
     _generating.remove(levelNumber);
-    
     _pregenerateNext(levelNumber + 1);
     return level;
   }
@@ -42,7 +36,15 @@ class LevelGenerator {
   GameLevel _generateInternal(int levelNumber) {
     final random = Random(levelNumber);
     final gridSize = _getGridSize(levelNumber);
-    return _generateLevelWithSeed(levelNumber, gridSize, random);
+    final snakeFactor = _getSnakeFactor(levelNumber);
+    final varianceFactor = _getVarianceFactor(levelNumber);
+    return _generateLevelWithSeed(
+      levelNumber,
+      gridSize,
+      random,
+      snakeFactor: snakeFactor,
+      varianceFactor: varianceFactor,
+    );
   }
 
   void pregenerateAround(int currentLevel, {int range = 1}) {
@@ -51,14 +53,11 @@ class LevelGenerator {
       if (levelNumber < 1) continue;
       if (!_cache.containsKey(levelNumber) && !_generating.contains(levelNumber)) {
         _generating.add(levelNumber);
-        debugPrint('⏳ [LevelGenerator] Spawning isolate to pre-generate level $levelNumber...');
         compute(_isolateGenerate, levelNumber).then((level) {
           _cache[levelNumber] = level;
           _generating.remove(levelNumber);
-          debugPrint('✅ [LevelGenerator] Finished pre-generating level $levelNumber in background.');
         }).catchError((e) {
           _generating.remove(levelNumber);
-          debugPrint('❌ [LevelGenerator] Failed to pre-generate level $levelNumber: $e');
         });
       }
     }
@@ -72,23 +71,70 @@ class LevelGenerator {
     return LevelGenerator()._generateInternal(levelNumber);
   }
 
+  static GameLevel _isolateGenerateRandom(Map<String, int> params) {
+    return LevelGenerator().generateRandom(
+      gridSize: params['gridSize']!,
+      seed: params['seed']!,
+    );
+  }
+
+  Future<GameLevel> generateRandomAsync({required int gridSize, required int seed}) {
+    return compute(_isolateGenerateRandom, {'gridSize': gridSize, 'seed': seed});
+  }
+
   GameLevel generateRandom({required int gridSize, required int seed}) {
     final random = Random(seed);
-    return _generateLevelWithSeed(-1, gridSize, random);
+    final snakeFactor = (gridSize >= 10) ? 0.75 : (gridSize >= 8 ? 0.55 : 0.35);
+    final varianceFactor = (gridSize >= 10) ? 0.60 : (gridSize >= 8 ? 0.40 : 0.20);
+    return _generateLevelWithSeed(
+      -1,
+      gridSize,
+      random,
+      snakeFactor: snakeFactor,
+      varianceFactor: varianceFactor,
+    );
   }
 
   int _getGridSize(int level) {
     if (level <= 5) return 5;
-    if (level <= 15) return 6;
-    if (level <= 30) return 7;
-    if (level <= 45) return 8;
-    if (level <= 60) return 9;
-    if (level <= 75) return 10;
-    if (level <= 90) return 11;
+    if (level <= 20) return 6;
+    if (level <= 45) return 7;
+    if (level <= 80) return 8;
+    if (level <= 130) return 9;
+    if (level <= 190) return 10;
+    if (level <= 250) return 11;
     return 12;
   }
 
-  GameLevel _generateLevelWithSeed(int levelNumber, int gridSize, Random random) {
+  double _getSnakeFactor(int level) {
+    if (level <= 5) return 0.10;
+    if (level <= 20) return 0.25;
+    if (level <= 45) return 0.40;
+    if (level <= 80) return 0.55;
+    if (level <= 130) return 0.68;
+    if (level <= 190) return 0.78;
+    if (level <= 250) return 0.85;
+    return 0.90;
+  }
+
+  double _getVarianceFactor(int level) {
+    if (level <= 5) return 0.05;
+    if (level <= 20) return 0.15;
+    if (level <= 45) return 0.28;
+    if (level <= 80) return 0.40;
+    if (level <= 130) return 0.52;
+    if (level <= 190) return 0.64;
+    if (level <= 250) return 0.74;
+    return 0.80;
+  }
+
+  GameLevel _generateLevelWithSeed(
+    int levelNumber,
+    int gridSize,
+    Random random, {
+    double snakeFactor = 0.3,
+    double varianceFactor = 0.2,
+  }) {
     var queenCols = List<int>.filled(gridSize, -1);
     var colorRegions = List.generate(gridSize, (_) => List<int>.filled(gridSize, -1));
     var finalColors = <Color>[];
@@ -101,57 +147,110 @@ class LevelGenerator {
           : random.nextInt(1000000);
       final subRandom = Random(subSeed);
 
-      // 1. Solve N-queens placement
       queenCols = List<int>.filled(gridSize, -1);
       final solved = _solveQueens(0, gridSize, queenCols, subRandom);
       if (!solved) continue;
 
-      // 2. Clear and set initial region cells containing the queens
       colorRegions = List.generate(gridSize, (_) => List<int>.filled(gridSize, -1));
       for (int r = 0; r < gridSize; r++) {
         colorRegions[r][queenCols[r]] = r;
       }
 
-      // 3. Grow connected color regions using BFS
-      List<Point<int>> queue = [];
+      final regionWeights = List<double>.generate(gridSize, (i) {
+        final variance = (subRandom.nextDouble() * 2.0 - 1.0) * varianceFactor;
+        return (1.0 + variance).clamp(0.4, 2.0);
+      });
+
+      final activeFrontier = <Point<int>>[];
+      final lastDirections = <int, Point<int>>{};
+
       for (int r = 0; r < gridSize; r++) {
-        queue.add(Point(r, queenCols[r]));
+        activeFrontier.add(Point(r, queenCols[r]));
       }
-      
-      queue.shuffle(subRandom);
 
-      while (queue.isNotEmpty) {
-        List<Point<int>> nextQueue = [];
-        for (final p in queue) {
-          final r = p.x;
-          final c = p.y;
-          final currentRegion = colorRegions[r][c];
+      int unassignedCells = (gridSize * gridSize) - gridSize;
 
-          final neighbors = [
-            Point(r - 1, c),
-            Point(r + 1, c),
-            Point(r, c - 1),
-            Point(r, c + 1),
-          ];
-          neighbors.shuffle(subRandom);
+      while (unassignedCells > 0 && activeFrontier.isNotEmpty) {
+        activeFrontier.shuffle(subRandom);
+        final currentPoint = activeFrontier.removeLast();
+        final r = currentPoint.x;
+        final c = currentPoint.y;
+        final currentRegion = colorRegions[r][c];
 
-          for (final n in neighbors) {
-            if (n.x >= 0 && n.x < gridSize && n.y >= 0 && n.y < gridSize) {
-              if (colorRegions[n.x][n.y] == -1) {
-                colorRegions[n.x][n.y] = currentRegion;
-                nextQueue.add(n);
+        final candidates = [
+          Point(r - 1, c),
+          Point(r + 1, c),
+          Point(r, c - 1),
+          Point(r, c + 1),
+        ].where((p) =>
+            p.x >= 0 &&
+            p.x < gridSize &&
+            p.y >= 0 &&
+            p.y < gridSize &&
+            colorRegions[p.x][p.y] == -1).toList();
+
+        if (candidates.isEmpty) continue;
+
+        Point<int> chosen;
+        final lastDir = lastDirections[currentRegion];
+        if (lastDir != null &&
+            subRandom.nextDouble() < snakeFactor &&
+            candidates.any((p) => (p.x - r == lastDir.x && p.y - c == lastDir.y))) {
+          chosen = candidates.firstWhere((p) => (p.x - r == lastDir.x && p.y - c == lastDir.y));
+        } else {
+          candidates.shuffle(subRandom);
+          chosen = candidates.first;
+        }
+
+        colorRegions[chosen.x][chosen.y] = currentRegion;
+        lastDirections[currentRegion] = Point(chosen.x - r, chosen.y - c);
+        unassignedCells--;
+
+        final expansionChance = regionWeights[currentRegion];
+        if (subRandom.nextDouble() <= expansionChance) {
+          activeFrontier.add(chosen);
+        } else {
+          activeFrontier.insert(0, chosen);
+        }
+
+        if (candidates.length > 1 && subRandom.nextDouble() < (1.0 - snakeFactor)) {
+          activeFrontier.add(currentPoint);
+        }
+      }
+
+      while (unassignedCells > 0) {
+        bool progress = false;
+        for (int r = 0; r < gridSize; r++) {
+          for (int c = 0; c < gridSize; c++) {
+            if (colorRegions[r][c] == -1) {
+              final adj = [
+                Point(r - 1, c),
+                Point(r + 1, c),
+                Point(r, c - 1),
+                Point(r, c + 1),
+              ].where((p) =>
+                  p.x >= 0 &&
+                  p.x < gridSize &&
+                  p.y >= 0 &&
+                  p.y < gridSize &&
+                  colorRegions[p.x][p.y] != -1).toList();
+              if (adj.isNotEmpty) {
+                adj.shuffle(subRandom);
+                colorRegions[r][c] = colorRegions[adj.first.x][adj.first.y];
+                unassignedCells--;
+                progress = true;
               }
             }
           }
         }
-        nextQueue.shuffle(subRandom);
-        queue = nextQueue;
+        if (!progress) break;
       }
 
-      // 4. Mutate partition to eliminate alternative solutions
       bool success = false;
       int mutations = 0;
-      while (mutations < 150) {
+      final maxMutations = (150 + (snakeFactor * 100)).round();
+
+      while (mutations < maxMutations) {
         final altSolution = _findAlternativeSolution(gridSize, colorRegions, queenCols, subRandom);
         if (altSolution == null) {
           success = true;
@@ -177,7 +276,6 @@ class LevelGenerator {
           final c = cell.y;
           final currentRegion = colorRegions[r][c];
 
-          // Cannot reassign the cell containing the target solution's queen
           if (queenCols[currentRegion] == c && currentRegion == r) {
             continue;
           }
@@ -302,151 +400,104 @@ class LevelGenerator {
 
       if (row == gridSize) {
         if (hasDiverged) {
-          alternative = List.from(queenCols);
+          alternative = List<int>.from(queenCols);
         }
         return;
       }
 
-      for (int r = row; r < gridSize; r++) {
-        bool hasOption = false;
-        final checkPrevCol = r > 0 ? queenCols[r - 1] : -1;
-        final checkNextCol = r < gridSize - 1 ? queenCols[r + 1] : -1;
+      final cols = List<int>.generate(gridSize, (i) => i)..shuffle(random);
 
-        for (int c = 0; c < gridSize; c++) {
-          if (colsUsed[c]) continue;
-          final reg = colorRegions[r][c];
-          if (regionsUsed[reg]) continue;
-          if (checkPrevCol != -1 && (c - checkPrevCol).abs() <= 1) continue;
-          if (checkNextCol != -1 && (c - checkNextCol).abs() <= 1) continue;
-
-          hasOption = true;
-          break;
-        }
-        if (!hasOption) {
-          return;
-        }
-      }
-
-      final targetCol = targetSolution[row];
-      final colsToTry = List<int>.generate(gridSize, (i) => i)
-        ..remove(targetCol)
-        ..shuffle(random);
-
-      for (final col in colsToTry) {
-        final region = colorRegions[row][col];
-        if (colsUsed[col] || regionsUsed[region]) continue;
+      for (final c in cols) {
+        if (colsUsed[c]) continue;
+        final region = colorRegions[row][c];
+        if (region < 0 || region >= gridSize || regionsUsed[region]) continue;
 
         if (row > 0) {
-          final prevCol = queenCols[row - 1];
-          if ((col - prevCol).abs() <= 1) continue;
+          final prevC = queenCols[row - 1];
+          if ((prevC - c).abs() <= 1) continue;
         }
 
-        colsUsed[col] = true;
+        final nextDiverged = hasDiverged || (c != targetSolution[row]);
+
+        colsUsed[c] = true;
         regionsUsed[region] = true;
-        queenCols[row] = col;
+        queenCols[row] = c;
 
-        solve(row + 1, true);
+        solve(row + 1, nextDiverged);
 
-        colsUsed[col] = false;
+        colsUsed[c] = false;
         regionsUsed[region] = false;
         queenCols[row] = -1;
-      }
 
-      if (targetCol >= 0 && targetCol < gridSize) {
-        final col = targetCol;
-        final region = colorRegions[row][col];
-        if (!colsUsed[col] && !regionsUsed[region]) {
-          if (row > 0) {
-            final prevCol = queenCols[row - 1];
-            if ((col - prevCol).abs() <= 1) return;
-          }
-
-          colsUsed[col] = true;
-          regionsUsed[region] = true;
-          queenCols[row] = col;
-
-          solve(row + 1, hasDiverged);
-
-          colsUsed[col] = false;
-          regionsUsed[region] = false;
-          queenCols[row] = -1;
-        }
+        if (alternative != null) return;
       }
     }
 
     solve(0, false);
-    if (alternative == const <int>[]) {
-      return const <int>[];
-    }
     return alternative;
   }
 
+  bool _solveQueens(int row, int gridSize, List<int> queenCols, Random random) {
+    if (row == gridSize) return true;
 
-  bool _solveQueens(int row, int N, List<int> cols, Random random) {
-    if (row == N) return true;
+    final cols = List<int>.generate(gridSize, (i) => i)..shuffle(random);
 
-    final colIndices = List<int>.generate(N, (i) => i)..shuffle(random);
-    for (final col in colIndices) {
-      if (_isValidPlacement(row, col, cols)) {
-        cols[row] = col;
-        if (_solveQueens(row + 1, N, cols, random)) {
-          return true;
+    for (final c in cols) {
+      bool ok = true;
+      for (int r = 0; r < row; r++) {
+        final qc = queenCols[r];
+        if (qc == c || (qc - c).abs() <= 1 && (r - row).abs() <= 1) {
+          ok = false;
+          break;
         }
-        cols[row] = -1;
       }
+      if (!ok) continue;
+
+      queenCols[row] = c;
+      if (_solveQueens(row + 1, gridSize, queenCols, random)) {
+        return true;
+      }
+      queenCols[row] = -1;
     }
     return false;
   }
 
-  bool _isValidPlacement(int row, int col, List<int> cols) {
-    for (int prevRow = 0; prevRow < row; prevRow++) {
-      final prevCol = cols[prevRow];
-      if (prevCol == col) return false;
-
-      final rowDiff = row - prevRow;
-      final colDiff = (col - prevCol).abs();
-      if (rowDiff == 1 && colDiff <= 1) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   List<Color> _pickColors(int count, Random random, int gridSize, List<List<int>> colorRegions) {
-    final indices = List.generate(AppColors.queensColors.length, (i) => i)..shuffle(random);
-    final chosenColors = indices.take(count).map((i) => AppColors.queensColors[i]).toList();
+    final available = List<Color>.from(AppColors.queensColors);
+    final chosenColors = <Color>[];
 
-    // Build adjacency graph for regions.
+    for (int i = 0; i < count; i++) {
+      chosenColors.add(available[i % available.length]);
+    }
+
     final adj = List.generate(count, (_) => <int>{});
     for (int r = 0; r < gridSize; r++) {
       for (int c = 0; c < gridSize; c++) {
-        final reg1 = colorRegions[r][c];
-        if (reg1 == -1) continue;
-        final neighbors = [
-          Point(r - 1, c),
-          Point(r + 1, c),
-          Point(r, c - 1),
-          Point(r, c + 1),
-        ];
-        for (final n in neighbors) {
-          if (n.x >= 0 && n.x < gridSize && n.y >= 0 && n.y < gridSize) {
-            final reg2 = colorRegions[n.x][n.y];
-            if (reg2 != -1 && reg1 != reg2) {
-              adj[reg1].add(reg2);
-              adj[reg2].add(reg1);
-            }
+        final reg = colorRegions[r][c];
+        if (r + 1 < gridSize) {
+          final regBelow = colorRegions[r + 1][c];
+          if (reg != regBelow) {
+            adj[reg].add(regBelow);
+            adj[regBelow].add(reg);
+          }
+        }
+        if (c + 1 < gridSize) {
+          final regRight = colorRegions[r][c + 1];
+          if (reg != regRight) {
+            adj[reg].add(regRight);
+            adj[regRight].add(reg);
           }
         }
       }
     }
 
     double colorDistance(Color a, Color b) {
-      final r1 = (a.r * 255).round();
-      final g1 = (a.g * 255).round();
-      final b1 = (a.b * 255).round();
-      final r2 = (b.r * 255).round();
-      final g2 = (b.g * 255).round();
-      final b2 = (b.b * 255).round();
+      final r1 = (a.r * 255.0);
+      final g1 = (a.g * 255.0);
+      final b1 = (a.b * 255.0);
+      final r2 = (b.r * 255.0);
+      final g2 = (b.g * 255.0);
+      final b2 = (b.b * 255.0);
       return sqrt((r1 - r2) * (r1 - r2) + (g1 - g2) * (g1 - g2) + (b1 - b2) * (b1 - b2));
     }
 
@@ -466,7 +517,6 @@ class LevelGenerator {
     List<Color> bestAssignment = List.from(chosenColors);
     double bestScore = calculateScore(bestAssignment);
 
-    // Hill climbing: try swapping colors to improve the minimum adjacent distance
     bool improved = true;
     while (improved) {
       improved = false;
@@ -490,5 +540,3 @@ class LevelGenerator {
     return bestAssignment;
   }
 }
-
-

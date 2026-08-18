@@ -9,7 +9,7 @@ import 'package:queens/ui/core/theme/app_colors.dart';
 import 'package:queens/ui/core/widgets/tangible_button.dart';
 import 'package:queens/ui/core/widgets/crown_widget.dart';
 import 'package:queens/ui/features/game/view_models/game_view_model.dart';
-import 'package:queens/ui/features/support/views/support_view.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:queens/ui/providers.dart';
 
 class GameView extends ConsumerStatefulWidget {
@@ -35,6 +35,7 @@ class _GameViewState extends ConsumerState<GameView> {
   void initState() {
     super.initState();
     Future.microtask(() {
+      if (!mounted) return;
       if (widget.isRandom) {
         ref.read(gameViewModelProvider.notifier).loadRandomLevel(widget.randomDifficulty);
       } else {
@@ -83,25 +84,12 @@ class _GameViewState extends ConsumerState<GameView> {
                           letterSpacing: 1.0,
                         ),
                       ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _circleButton(
-                            icon: Icons.undo_rounded,
-                            iconSize: 20,
-                            enabled: state.canUndo && !state.isComplete,
-                            onTap: () =>
-                                ref.read(gameViewModelProvider.notifier).undo(),
-                          ),
-                          const SizedBox(width: 8),
-                          _circleButton(
-                            icon: Icons.refresh_rounded,
-                            iconSize: 20,
-                            onTap: () => ref
-                                .read(gameViewModelProvider.notifier)
-                                .resetLevel(),
-                          ),
-                        ],
+                      _circleButton(
+                        icon: Icons.refresh_rounded,
+                        iconSize: 20,
+                        onTap: () => ref
+                            .read(gameViewModelProvider.notifier)
+                            .resetLevel(),
                       ),
                     ],
                   ),
@@ -263,10 +251,100 @@ class _GameViewState extends ConsumerState<GameView> {
             ),
           ),
         ),
-        
-        // Help tip text
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            GestureDetector(
+              onTap: (state.canUndo && !state.isComplete)
+                  ? () {
+                      HapticFeedback.lightImpact();
+                      ref.read(gameViewModelProvider.notifier).undo();
+                    }
+                  : null,
+              child: Opacity(
+                opacity: (state.canUndo && !state.isComplete) ? 1.0 : 0.35,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: (state.canUndo && !state.isComplete) ? Colors.white24 : Colors.white10,
+                      width: 1.0,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(
+                        Icons.undo_rounded,
+                        color: AppColors.headingDark,
+                        size: 18,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'UNDO',
+                        style: TextStyle(
+                          fontFamily: 'BebasNeue',
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.headingDark,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            if (ref.watch(settingsProvider).isHintEnabled) ...[
+              const SizedBox(width: 12),
+              GestureDetector(
+                onTap: (state.hintsRemaining > 0 && !state.isComplete)
+                    ? () => ref.read(gameViewModelProvider.notifier).revealHint()
+                    : null,
+                child: Opacity(
+                  opacity: (state.hintsRemaining > 0 && !state.isComplete) ? 1.0 : 0.35,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: state.hintsRemaining > 0 ? Colors.white24 : Colors.white10,
+                        width: 1.0,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.lightbulb_rounded,
+                          color: Color(0xFFFFCC00),
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'HINT (${state.hintsRemaining}/2)',
+                          style: const TextStyle(
+                            fontFamily: 'BebasNeue',
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.headingDark,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
         const Padding(
-          padding: EdgeInsets.symmetric(vertical: 20),
+          padding: EdgeInsets.symmetric(vertical: 16),
           child: Text(
             'TAP: CYCLE [ EMPTY ➔ X ➔ QUEEN ♕ ]',
             style: TextStyle(
@@ -543,14 +621,7 @@ class _GameViewState extends ConsumerState<GameView> {
                             text: 'Buy Me a Coffee',
                             isSecondary: true,
                             height: 50,
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const SupportView(),
-                                ),
-                              );
-                            },
+                            onPressed: _openKoFiUrl,
                           ),
                         ],
                       ),
@@ -571,6 +642,19 @@ class _GameViewState extends ConsumerState<GameView> {
         ),
       ),
     );
+  }
+
+  Future<void> _openKoFiUrl() async {
+    final Uri uri = Uri.parse('https://ko-fi.com/sidhant947');
+    try {
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        await launchUrl(uri, mode: LaunchMode.platformDefault);
+      }
+    } catch (_) {
+      try {
+        await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+      } catch (_) {}
+    }
   }
 }
 

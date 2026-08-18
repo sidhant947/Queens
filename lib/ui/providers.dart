@@ -39,9 +39,11 @@ final gameViewModelProvider =
     StateNotifierProvider.autoDispose<GameViewModel, GameViewModelState>((ref) {
       final progressRepository = ref.read(progressRepositoryProvider);
       final levelGenerator = ref.read(levelGeneratorProvider);
+      final settingsService = ref.read(settingsServiceProvider);
       return GameViewModel(
         progressRepository: progressRepository,
         levelGenerator: levelGenerator,
+        settingsService: settingsService,
       );
     });
 

@@ -14,10 +14,12 @@ class SettingsService {
     final isColorblindMode = box.get('colorblind_mode', defaultValue: false) as bool;
     final isAutoCrossDisabled = box.get('auto_cross_disabled', defaultValue: false) as bool;
     final crownSkinId = box.get('crown_skin', defaultValue: 'classic') as String?;
+    final isHintEnabled = box.get('hint_enabled', defaultValue: false) as bool;
     return AppSettings(
       isColorblindMode: isColorblindMode,
       isAutoCrossDisabled: isAutoCrossDisabled,
       crownSkin: CrownSkin.fromId(crownSkinId),
+      isHintEnabled: isHintEnabled,
     );
   }
 
@@ -26,5 +28,6 @@ class SettingsService {
     await box.put('colorblind_mode', settings.isColorblindMode);
     await box.put('auto_cross_disabled', settings.isAutoCrossDisabled);
     await box.put('crown_skin', settings.crownSkin.id);
+    await box.put('hint_enabled', settings.isHintEnabled);
   }
 }

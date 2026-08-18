@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:queens/data/repositories/progress_repository.dart';
+import 'package:queens/data/services/settings_service.dart';
 import 'package:queens/domain/models/game_level.dart';
 import 'package:queens/domain/use_cases/cell_rules.dart';
 import 'package:queens/domain/use_cases/level_generator.dart';
@@ -15,7 +16,6 @@ enum CellState {
   queen,
 }
 
-/// A single board snapshot kept on the undo stack.
 @immutable
 class _Snapshot {
   const _Snapshot(this.board, this.moveCount);
@@ -35,6 +35,7 @@ class GameViewModelState {
     this.elapsedSeconds = 0,
     this.canUndo = false,
     this.hintCell,
+    this.hintsRemaining = 2,
     this.error,
     this.isRandomMode = false,
     this.randomDifficulty,
@@ -50,9 +51,8 @@ class GameViewModelState {
   final int moveCount;
   final int elapsedSeconds;
   final bool canUndo;
-
-  /// Encoded `row * gridSize + col` of a hinted cell to flash, or null.
   final int? hintCell;
+  final int hintsRemaining;
   final String? error;
   final bool isRandomMode;
   final String? randomDifficulty;
@@ -70,6 +70,7 @@ class GameViewModelState {
     bool? canUndo,
     int? hintCell,
     bool clearHint = false,
+    int? hintsRemaining,
     String? error,
     bool? isRandomMode,
     String? randomDifficulty,
@@ -86,6 +87,7 @@ class GameViewModelState {
       elapsedSeconds: elapsedSeconds ?? this.elapsedSeconds,
       canUndo: canUndo ?? this.canUndo,
       hintCell: clearHint ? null : (hintCell ?? this.hintCell),
+      hintsRemaining: hintsRemaining ?? this.hintsRemaining,
       error: error,
       isRandomMode: isRandomMode ?? this.isRandomMode,
       randomDifficulty: randomDifficulty ?? this.randomDifficulty,
@@ -99,10 +101,12 @@ class GameViewModel extends StateNotifier<GameViewModelState> {
   GameViewModel({
     required this.progressRepository,
     required this.levelGenerator,
+    required this.settingsService,
   }) : super(const GameViewModelState());
 
   final ProgressRepository progressRepository;
   final LevelGenerator levelGenerator;
+  final SettingsService settingsService;
 
   static const int _maxUndo = 50;
 
@@ -110,11 +114,13 @@ class GameViewModel extends StateNotifier<GameViewModelState> {
   Timer? _timer;
   Timer? _hintTimer;
 
-  // --- Timer ---------------------------------------------------------------
-
   void _startTimer() {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) {
+        _stopTimer();
+        return;
+      }
       if (state.isComplete) {
         _timer?.cancel();
         return;
@@ -128,8 +134,6 @@ class GameViewModel extends StateNotifier<GameViewModelState> {
     _timer = null;
   }
 
-  // --- Loading -------------------------------------------------------------
-
   List<List<CellState>> _emptyBoard(int n) =>
       List.generate(n, (_) => List<CellState>.filled(n, CellState.empty));
 
@@ -139,9 +143,11 @@ class GameViewModel extends StateNotifier<GameViewModelState> {
 
     try {
       final level = await levelGenerator.generateAsync(levelNumber);
+      if (!mounted) return;
 
-      // Resume a saved game if one exists for this exact level.
       final progress = await progressRepository.getProgress();
+      if (!mounted) return;
+
       List<List<CellState>> board;
       int moveCount = 0;
       int elapsed = 0;
@@ -168,9 +174,11 @@ class GameViewModel extends StateNotifier<GameViewModelState> {
         moveCount: moveCount,
         elapsedSeconds: elapsed,
         isComplete: isComplete,
+        hintsRemaining: 2,
       );
       if (!isComplete) _startTimer();
     } catch (e) {
+      if (!mounted) return;
       state = state.copyWith(
         isLoading: false,
         error: 'Failed to load level: $e',
@@ -178,32 +186,64 @@ class GameViewModel extends StateNotifier<GameViewModelState> {
     }
   }
 
+  int _parseGridSize(String difficulty) {
+    final lower = difficulty.toLowerCase().trim();
+    if (lower.contains('x')) {
+      final parts = lower.split('x');
+      final size = int.tryParse(parts[0].trim());
+      if (size != null && size >= 4 && size <= 12) return size;
+    }
+    switch (lower) {
+      case 'easy':
+      case '5x5':
+        return 5;
+      case 'medium':
+      case '6x6':
+        return 6;
+      case 'hard':
+      case '7x7':
+        return 7;
+      case 'super hard':
+      case '8x8':
+        return 8;
+      case 'super duper hard':
+      case 'expert':
+      case '9x9':
+        return 9;
+      case '10x10':
+        return 10;
+      case '11x11':
+        return 11;
+      case '12x12':
+        return 12;
+      default:
+        final parsed = int.tryParse(difficulty);
+        if (parsed != null && parsed >= 4 && parsed <= 12) return parsed;
+        return 5;
+    }
+  }
+
   Future<void> loadRandomLevel(String difficulty, {int? seed}) async {
     _undoStack.clear();
     final int levelSeed = seed ?? DateTime.now().millisecondsSinceEpoch;
+    final int gridSize = _parseGridSize(difficulty);
+
     state = GameViewModelState(
       isLoading: true,
       isRandomMode: true,
       randomDifficulty: difficulty,
       randomSeed: levelSeed,
+      randomGridSize: gridSize,
+      hintsRemaining: 2,
     );
 
     try {
-      int gridSize = 5;
-      if (difficulty == 'Medium') {
-        gridSize = 6;
-      } else if (difficulty == 'Hard') {
-        gridSize = 7;
-      } else if (difficulty == 'Super Hard') {
-        gridSize = 8;
-      } else if (difficulty == 'Super Duper Hard') {
-        gridSize = 9;
-      }
-
-      final level = levelGenerator.generateRandom(
+      final level = await levelGenerator.generateRandomAsync(
         gridSize: gridSize,
         seed: levelSeed,
       );
+      if (!mounted) return;
+
       final board = _emptyBoard(gridSize);
       final conflicts = CellRules.computeConflicts(board, level);
 
@@ -216,9 +256,11 @@ class GameViewModel extends StateNotifier<GameViewModelState> {
         canUndo: false,
         isLoading: false,
         randomGridSize: gridSize,
+        hintsRemaining: 2,
       );
       _startTimer();
     } catch (e) {
+      if (!mounted) return;
       state = state.copyWith(
         isLoading: false,
         error: 'Failed to load random level: $e',
@@ -226,13 +268,10 @@ class GameViewModel extends StateNotifier<GameViewModelState> {
     }
   }
 
-  // --- Interaction ---------------------------------------------------------
-
   void toggleCell(int r, int c) {
     final level = state.level;
     if (state.isComplete || level == null) return;
 
-    // Snapshot current board for undo.
     _pushUndo();
 
     final n = level.gridSize;
@@ -344,29 +383,75 @@ class GameViewModel extends StateNotifier<GameViewModelState> {
     _persistInProgress();
   }
 
-  void requestHint() {
+  void revealHint() {
     final level = state.level;
-    if (level == null || state.isComplete) return;
-    final hint = CellRules.suggestHint(state.board, level);
-    if (hint == null) return;
-    final encoded = hint[0] * level.gridSize + hint[1];
-    HapticFeedback.selectionClick();
-    state = state.copyWith(hintCell: encoded);
+    if (level == null || state.isComplete || state.hintsRemaining <= 0) return;
 
-    // Auto-clear the flash after a short delay.
+    final n = level.gridSize;
+    int? targetRow;
+
+    for (int r = 0; r < n; r++) {
+      final c = level.solutionCols[r];
+      if (state.board[r][c] != CellState.queen) {
+        targetRow = r;
+        break;
+      }
+    }
+
+    if (targetRow == null) return;
+
+    final targetCol = level.solutionCols[targetRow];
+    _pushUndo();
+
+    final newBoard = state.board.map((row) => List<CellState>.from(row)).toList();
+
+    for (int c = 0; c < n; c++) {
+      if (newBoard[targetRow][c] == CellState.queen && c != targetCol) {
+        newBoard[targetRow][c] = CellState.empty;
+      }
+    }
+    for (int r = 0; r < n; r++) {
+      if (newBoard[r][targetCol] == CellState.queen && r != targetRow) {
+        newBoard[r][targetCol] = CellState.empty;
+      }
+    }
+
+    newBoard[targetRow][targetCol] = CellState.queen;
+
+    final conflicts = CellRules.computeConflicts(newBoard, level);
+    final isComplete = CellRules.isComplete(newBoard, level);
+
+    if (isComplete) {
+      HapticFeedback.heavyImpact();
+      _stopTimer();
+    } else {
+      HapticFeedback.mediumImpact();
+    }
+
+    final encoded = targetRow * n + targetCol;
+
+    state = state.copyWith(
+      board: newBoard,
+      conflicts: conflicts,
+      moveCount: state.moveCount + 1,
+      isComplete: isComplete,
+      canUndo: _undoStack.isNotEmpty,
+      hintsRemaining: state.hintsRemaining - 1,
+      hintCell: encoded,
+    );
+
     _hintTimer?.cancel();
-    _hintTimer = Timer(const Duration(milliseconds: 1400), () {
+    _hintTimer = Timer(const Duration(milliseconds: 1600), () {
       if (mounted) state = state.copyWith(clearHint: true);
     });
-  }
 
-  // --- Persistence ---------------------------------------------------------
+    _persistInProgress();
+  }
 
   void _persistInProgress() {
     final level = state.level;
     if (level == null || state.isRandomMode) return;
     if (state.isComplete) return;
-    // Fire-and-forget; Hive writes are local and fast.
     progressRepository.saveInProgress(
       level.levelNumber,
       state.board,
@@ -382,11 +467,13 @@ class GameViewModel extends StateNotifier<GameViewModelState> {
       await progressRepository.addRandomLevelMoves(state.moveCount);
     } else {
       await progressRepository.completeLevel(level.levelNumber, state.moveCount);
+      if (!mounted) return;
       await progressRepository.recordLevelResult(
         level.levelNumber,
         state.moveCount,
         state.elapsedSeconds,
       );
+      if (!mounted) return;
       await progressRepository.clearInProgress();
     }
   }
@@ -395,12 +482,11 @@ class GameViewModel extends StateNotifier<GameViewModelState> {
     final level = state.level;
     if (level == null) return;
     if (state.isRandomMode) {
-      await loadRandomLevel(state.randomDifficulty ?? 'Easy',
+      await loadRandomLevel(state.randomDifficulty ?? '5x5',
           seed: state.randomSeed);
     } else {
-      // Drop any saved progress for this level before reloading fresh, so the
-      // resume check in loadLevel doesn't restore the board we just cleared.
       await progressRepository.clearInProgress();
+      if (!mounted) return;
       await loadLevel(level.levelNumber);
     }
   }
