@@ -174,9 +174,10 @@ class _HomeViewState extends ConsumerState<HomeView> with SingleTickerProviderSt
                         );
                       },
                     ),
-                    const CrownWidget(
-                      color: Color(0xFFFFCC00), // Bright Gold Yellow
+                    CrownWidget(
+                      color: const Color(0xFFFFCC00),
                       size: 56,
+                      skin: ref.watch(settingsProvider).crownSkin,
                     ),
                   ],
                 ),

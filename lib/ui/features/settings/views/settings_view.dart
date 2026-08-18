@@ -1,7 +1,9 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:queens/domain/models/app_settings.dart';
 import 'package:queens/ui/core/theme/app_colors.dart';
+import 'package:queens/ui/core/widgets/crown_widget.dart';
 import 'package:queens/ui/core/widgets/tangible_button.dart';
 import 'package:queens/ui/providers.dart';
 
@@ -10,13 +12,11 @@ class SettingsView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: SafeArea(
         child: Column(
           children: [
-            // Header bar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
@@ -63,6 +63,110 @@ class SettingsView extends ConsumerWidget {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(24, 16, 28, 28),
                 children: [
+                  Builder(
+                    builder: (context) {
+                      final settings = ref.watch(settingsProvider);
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.white24, width: 1.0),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'QUEEN ICON',
+                              style: TextStyle(
+                                fontFamily: 'BebasNeue',
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.headingDark,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            const Text(
+                              'Choose the icon style for pieces placed on the board',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.subtext,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: CrownSkin.values.map((skin) {
+                                  final isSelected = settings.crownSkin == skin;
+                                  return GestureDetector(
+                                    onTap: () => ref
+                                        .read(settingsProvider.notifier)
+                                        .setCrownSkin(skin),
+                                    child: Container(
+                                      width: 78,
+                                      margin: const EdgeInsets.only(right: 10),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 12,
+                                        horizontal: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? const Color(0xFF2A2A2A)
+                                            : const Color(0xFF161616),
+                                        borderRadius: BorderRadius.circular(14),
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? Colors.white
+                                              : Colors.white12,
+                                          width: isSelected ? 1.5 : 1.0,
+                                        ),
+                                      ),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          SizedBox(
+                                            width: 44,
+                                            height: 44,
+                                            child: Center(
+                                              child: CrownWidget(
+                                                color: const Color(0xFFFFCC00),
+                                                size: 38,
+                                                skin: skin,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            skin.displayName.toUpperCase(),
+                                            textAlign: TextAlign.center,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontFamily: 'BebasNeue',
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.bold,
+                                              color: isSelected
+                                                  ? AppColors.headingDark
+                                                  : AppColors.subtext,
+                                              letterSpacing: 0.5,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                   Builder(
                     builder: (context) {
                       final settings = ref.watch(settingsProvider);
@@ -186,8 +290,6 @@ class SettingsView extends ConsumerWidget {
       ),
     );
   }
-
-
 
   void _confirmReset(BuildContext context, WidgetRef ref) {
     showDialog(

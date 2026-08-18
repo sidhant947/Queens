@@ -18,5 +18,9 @@ class SettingsViewModel extends StateNotifier<AppSettings> {
     state = state.copyWith(isAutoCrossDisabled: value);
     await settingsService.saveSettings(state);
   }
-}
 
+  Future<void> setCrownSkin(CrownSkin skin) async {
+    state = state.copyWith(crownSkin: skin);
+    await settingsService.saveSettings(state);
+  }
+}

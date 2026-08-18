@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 
+import 'package:queens/domain/models/app_settings.dart';
 import 'package:queens/domain/use_cases/cell_rules.dart';
 import 'package:queens/ui/core/theme/app_colors.dart';
 import 'package:queens/ui/core/widgets/tangible_button.dart';
@@ -666,6 +667,7 @@ class _QueensCellState extends ConsumerState<QueensCell> with TickerProviderStat
 
   @override
   Widget build(BuildContext context) {
+    final settings = ref.watch(settingsProvider);
     return GestureDetector(
       onTap: widget.onTap,
       child: AnimatedBuilder(
@@ -684,35 +686,42 @@ class _QueensCellState extends ConsumerState<QueensCell> with TickerProviderStat
             border: widget.regionBorder,
           ),
           alignment: Alignment.center,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              // Hint flash overlay.
-              Positioned.fill(
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  margin: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    color: widget.isHinted
-                        ? Colors.white.withValues(alpha: 0.3)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(6),
-                    border: widget.isHinted
-                        ? Border.all(color: Colors.white24, width: 1.0)
-                        : null,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final cellSize = math.min(constraints.maxWidth, constraints.maxHeight);
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  Positioned.fill(
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      margin: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: widget.isHinted
+                            ? Colors.white.withValues(alpha: 0.3)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(6),
+                        border: widget.isHinted
+                            ? Border.all(color: Colors.white24, width: 1.0)
+                            : null,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              _buildContent(),
-            ],
+                  _buildContent(settings.crownSkin, cellSize),
+                ],
+              );
+            },
           ),
         ),
       ),
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(CrownSkin crownSkin, double cellSize) {
     const Color activeIconColor = AppColors.headingDark;
+    final pieceSize = crownSkin.assetPath != null
+        ? (cellSize * 0.82).clamp(16.0, 72.0)
+        : (cellSize * 0.68).clamp(16.0, 56.0);
 
     if (widget.cellState == CellState.queen) {
       return ScaleTransition(
@@ -725,8 +734,8 @@ class _QueensCellState extends ConsumerState<QueensCell> with TickerProviderStat
                 animation: _glowAnimation,
                 builder: (context, child) {
                   return Container(
-                    width: 24,
-                    height: 24,
+                    width: pieceSize,
+                    height: pieceSize,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       boxShadow: [
@@ -742,8 +751,8 @@ class _QueensCellState extends ConsumerState<QueensCell> with TickerProviderStat
               ),
             AnimatedContainer(
               duration: const Duration(milliseconds: 250),
-              width: widget.hasConflict ? 32 : 0,
-              height: widget.hasConflict ? 32 : 0,
+              width: widget.hasConflict ? cellSize * 0.88 : 0,
+              height: widget.hasConflict ? cellSize * 0.88 : 0,
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: widget.hasConflict ? 0.4 : 0.0),
                 shape: BoxShape.circle,
@@ -751,40 +760,49 @@ class _QueensCellState extends ConsumerState<QueensCell> with TickerProviderStat
             ),
             CrownWidget(
               color: widget.hasConflict ? Colors.black : activeIconColor,
-              size: 24,
+              size: pieceSize,
+              skin: crownSkin,
             ),
           ],
         ),
       );
     } else if (widget.cellState == CellState.x) {
+      final xSize = (cellSize * 0.58).clamp(14.0, 48.0);
+      final isBright = widget.regionColor.computeLuminance() > 0.65;
+      final crossColor = isBright ? const Color(0xFF121212) : activeIconColor;
       return ScaleTransition(
         scale: _scaleAnimation,
         child: Icon(
           Icons.close_rounded,
-          size: 22,
-          color: activeIconColor,
-          shadows: const [
+          size: xSize,
+          color: crossColor,
+          shadows: [
             Shadow(
-              color: Colors.black54,
-              blurRadius: 4.0,
-              offset: Offset(0, 1),
+              color: isBright ? Colors.black26 : Colors.black54,
+              blurRadius: isBright ? 1.5 : 4.0,
+              offset: const Offset(0, 1),
             ),
           ],
         ),
       );
     } else if (widget.isAutoBlocked) {
+      final dotSize = (cellSize * 0.42).clamp(10.0, 32.0);
+      final isBright = widget.regionColor.computeLuminance() > 0.65;
+      final autoCrossColor = isBright
+          ? const Color(0xFF121212).withValues(alpha: 0.7)
+          : activeIconColor.withValues(alpha: 0.75);
       return AnimatedOpacity(
         duration: const Duration(milliseconds: 250),
         opacity: widget.isAutoBlocked ? 1.0 : 0.0,
         child: Icon(
           Icons.close_rounded,
-          size: 16,
-          color: activeIconColor.withValues(alpha: 0.75),
-          shadows: const [
+          size: dotSize,
+          color: autoCrossColor,
+          shadows: [
             Shadow(
-              color: Colors.black45,
-              blurRadius: 3.0,
-              offset: Offset(0, 1),
+              color: isBright ? Colors.black26 : Colors.black45,
+              blurRadius: isBright ? 1.5 : 3.0,
+              offset: const Offset(0, 1),
             ),
           ],
         ),

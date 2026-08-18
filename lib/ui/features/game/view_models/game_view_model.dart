@@ -138,7 +138,7 @@ class GameViewModel extends StateNotifier<GameViewModelState> {
     state = const GameViewModelState(isLoading: true);
 
     try {
-      final level = levelGenerator.generate(levelNumber);
+      final level = await levelGenerator.generateAsync(levelNumber);
 
       // Resume a saved game if one exists for this exact level.
       final progress = await progressRepository.getProgress();

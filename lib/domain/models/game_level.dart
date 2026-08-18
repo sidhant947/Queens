@@ -12,9 +12,9 @@ class GameLevel {
 
   final int levelNumber;
   final int gridSize;
-  final List<List<int>> colorRegions; // gridSize x gridSize grid of region indices (0 to gridSize - 1)
-  final List<Color> regionColors; // list of gridSize colors
-  final List<int> solutionCols; // solutionCols[row] = column of the queen in that row
+  final List<List<int>> colorRegions;
+  final List<Color> regionColors;
+  final List<int> solutionCols;
 
   GameLevel copyWith({
     int? levelNumber,

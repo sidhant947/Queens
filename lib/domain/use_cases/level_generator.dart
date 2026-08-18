@@ -1,6 +1,6 @@
 import 'dart:math';
 import 'package:flutter/foundation.dart';
-import 'package:material_ui/material_ui.dart' hide Random;
+import 'package:material_ui/material_ui.dart';
 
 import 'package:queens/domain/models/game_level.dart';
 import 'package:queens/ui/core/theme/app_colors.dart';
@@ -17,6 +17,21 @@ class LevelGenerator {
     } else {
       debugPrint('🐌 [LevelGenerator] Cache MISS for level $levelNumber. Generating on UI thread.');
       level = _generateInternal(levelNumber);
+    }
+    _generating.remove(levelNumber);
+    
+    _pregenerateNext(levelNumber + 1);
+    return level;
+  }
+
+  Future<GameLevel> generateAsync(int levelNumber) async {
+    GameLevel level;
+    if (_cache.containsKey(levelNumber)) {
+      debugPrint('⚡ [LevelGenerator] Cache HIT for level $levelNumber. Loading instantly.');
+      level = _cache.remove(levelNumber)!;
+    } else {
+      debugPrint('🐌 [LevelGenerator] Cache MISS for level $levelNumber. Spawning isolate.');
+      level = await compute(_isolateGenerate, levelNumber);
     }
     _generating.remove(levelNumber);
     
@@ -81,8 +96,6 @@ class LevelGenerator {
     int attempt = 0;
     while (true) {
       attempt++;
-      // Generate a deterministic sub-random seed per attempt for campaign levels,
-      // and a normal random seed for random mode levels.
       final subSeed = levelNumber >= 0
           ? (levelNumber * 1000 + attempt)
           : random.nextInt(1000000);
@@ -139,9 +152,13 @@ class LevelGenerator {
       bool success = false;
       int mutations = 0;
       while (mutations < 150) {
-        final altSolution = _findAlternativeSolution(gridSize, colorRegions, queenCols);
+        final altSolution = _findAlternativeSolution(gridSize, colorRegions, queenCols, subRandom);
         if (altSolution == null) {
           success = true;
+          break;
+        }
+        if (altSolution.isEmpty) {
+          success = false;
           break;
         }
 
@@ -267,34 +284,55 @@ class LevelGenerator {
     int gridSize,
     List<List<int>> colorRegions,
     List<int> targetSolution,
+    Random random,
   ) {
     final colsUsed = List<bool>.filled(gridSize, false);
     final regionsUsed = List<bool>.filled(gridSize, false);
     final queenCols = List<int>.filled(gridSize, -1);
     List<int>? alternative;
+    int visits = 0;
 
-    void solve(int row) {
+    void solve(int row, bool hasDiverged) {
+      visits++;
+      if (visits > 100000) {
+        alternative = const <int>[];
+        return;
+      }
       if (alternative != null) return;
 
       if (row == gridSize) {
-        bool different = false;
-        for (int i = 0; i < gridSize; i++) {
-          if (queenCols[i] != targetSolution[i]) {
-            different = true;
-            break;
-          }
-        }
-        if (different) {
+        if (hasDiverged) {
           alternative = List.from(queenCols);
         }
         return;
       }
 
+      for (int r = row; r < gridSize; r++) {
+        bool hasOption = false;
+        final checkPrevCol = r > 0 ? queenCols[r - 1] : -1;
+        final checkNextCol = r < gridSize - 1 ? queenCols[r + 1] : -1;
+
+        for (int c = 0; c < gridSize; c++) {
+          if (colsUsed[c]) continue;
+          final reg = colorRegions[r][c];
+          if (regionsUsed[reg]) continue;
+          if (checkPrevCol != -1 && (c - checkPrevCol).abs() <= 1) continue;
+          if (checkNextCol != -1 && (c - checkNextCol).abs() <= 1) continue;
+
+          hasOption = true;
+          break;
+        }
+        if (!hasOption) {
+          return;
+        }
+      }
+
       final targetCol = targetSolution[row];
+      final colsToTry = List<int>.generate(gridSize, (i) => i)
+        ..remove(targetCol)
+        ..shuffle(random);
 
-      for (int col = 0; col < gridSize; col++) {
-        if (col == targetCol) continue;
-
+      for (final col in colsToTry) {
         final region = colorRegions[row][col];
         if (colsUsed[col] || regionsUsed[region]) continue;
 
@@ -307,7 +345,7 @@ class LevelGenerator {
         regionsUsed[region] = true;
         queenCols[row] = col;
 
-        solve(row + 1);
+        solve(row + 1, true);
 
         colsUsed[col] = false;
         regionsUsed[region] = false;
@@ -327,7 +365,7 @@ class LevelGenerator {
           regionsUsed[region] = true;
           queenCols[row] = col;
 
-          solve(row + 1);
+          solve(row + 1, hasDiverged);
 
           colsUsed[col] = false;
           regionsUsed[region] = false;
@@ -336,7 +374,10 @@ class LevelGenerator {
       }
     }
 
-    solve(0);
+    solve(0, false);
+    if (alternative == const <int>[]) {
+      return const <int>[];
+    }
     return alternative;
   }
 
