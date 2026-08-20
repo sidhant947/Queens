@@ -8,6 +8,13 @@ import 'package:queens/ui/core/theme/app_colors.dart';
 class LevelGenerator {
   final Map<int, GameLevel> _cache = {};
   final Set<int> _generating = {};
+  // Tracks active background pre-generation isolates (not main loads).
+  // Kept at 1 to avoid spawning multiple heavy compute() isolates
+  // simultaneously, which causes OOM on Android for large grids (9×9+).
+  int _backgroundComputes = 0;
+  // True while a main-load compute() isolate is running; suppresses
+  // pre-generation until the user's level is fully loaded.
+  bool _mainLoadActive = false;
 
   GameLevel generate(int levelNumber) {
     GameLevel level;
@@ -26,7 +33,12 @@ class LevelGenerator {
     if (_cache.containsKey(levelNumber)) {
       level = _cache.remove(levelNumber)!;
     } else {
-      level = await compute(_isolateGenerate, levelNumber);
+      _mainLoadActive = true;
+      try {
+        level = await compute(_isolateGenerate, levelNumber);
+      } finally {
+        _mainLoadActive = false;
+      }
     }
     _generating.remove(levelNumber);
     _pregenerateNext(levelNumber + 1);
@@ -51,15 +63,21 @@ class LevelGenerator {
     for (int i = 0; i <= range; i++) {
       final levelNumber = currentLevel + i;
       if (levelNumber < 1) continue;
-      if (!_cache.containsKey(levelNumber) && !_generating.contains(levelNumber)) {
-        _generating.add(levelNumber);
-        compute(_isolateGenerate, levelNumber).then((level) {
-          _cache[levelNumber] = level;
-          _generating.remove(levelNumber);
-        }).catchError((e) {
-          _generating.remove(levelNumber);
-        });
-      }
+      if (_cache.containsKey(levelNumber) || _generating.contains(levelNumber)) continue;
+      // Limit concurrency: skip if a main load is running or a background
+      // isolate is already active. Prevents OOM from simultaneous heavy
+      // compute() calls on large grids (9×9+).
+      if (_mainLoadActive || _backgroundComputes >= 1) break;
+      _generating.add(levelNumber);
+      _backgroundComputes++;
+      compute(_isolateGenerate, levelNumber).then((level) {
+        _cache[levelNumber] = level;
+        _generating.remove(levelNumber);
+        _backgroundComputes--;
+      }).catchError((e) {
+        _generating.remove(levelNumber);
+        _backgroundComputes--;
+      });
     }
   }
 
