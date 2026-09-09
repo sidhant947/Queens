@@ -22,5 +22,15 @@ Procedurally generated random puzzle sizes from 5x5 up to 9x9, plus 150+ structu
 🔒 COMPLETELY OFFLINE
 No internet permission required. Your progress is saved locally using high-performance Hive persistence. Play anywhere, anytime.
 
+---
+
+## 🎨 Themes & Custom Skins
+
+Queens includes a theme selection system with custom skins and emoticons. If you use it , support by giving a star to repo.
+
+*   **Unlock Code**: `THANKYOU` (Enter this code to unlock all themes & custom emoticons instantly).
+
+---
+
 # License
 GNU GPL v3 License

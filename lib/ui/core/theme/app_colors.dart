@@ -1,26 +1,30 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:queens/domain/models/app_settings.dart';
 
 class AppColors {
   AppColors._();
 
-  static const Color primary = Color(0xFF2D2D2D);
-  static const Color accent = Color(0xFFFFFFFF);
-  static const Color headingDark = Color(0xFFFFFFFF);
-  static const Color headingWhite = Color(0xFF121212);
-  static const Color subtext = Color(0xFF888888);
-  static const Color bg = Color(0xFF121212);
-  static const Color gridLines = Color(0xFF2D2D2D);
-  static const Color surface = Color(0xFF1C1C1C);
+  static AppThemePreset currentTheme = AppThemePreset.obsidian;
 
-  static const Color darkBg = Color(0xFF121212);
-  static const Color darkSurface = Color(0xFF1C1C1C);
-  static const Color darkCard = Color(0xFF1C1C1C);
-  static const Color darkBorder = Color(0xFF2D2D2D);
+  static Color get primary => currentTheme.primary;
+  static Color get accent => currentTheme.accent;
+  static Color get headingDark => currentTheme.headingDark;
+  static Color get headingWhite => currentTheme.headingWhite;
+  static Color get subtext => currentTheme.subtext;
+  static Color get bg => currentTheme.bg;
+  static Color get gridLines => currentTheme.gridLines;
+  static Color get surface => currentTheme.surface;
+  static Color get border => currentTheme.border;
 
-  static const Color lightBg = Color(0xFF121212);
-  static const Color lightSurface = Color(0xFF1C1C1C);
-  static const Color lightCard = Color(0xFF1C1C1C);
-  static const Color lightBorder = Color(0xFF2D2D2D);
+  static Color get darkBg => bg;
+  static Color get darkSurface => surface;
+  static Color get darkCard => surface;
+  static Color get darkBorder => border;
+
+  static Color get lightBg => bg;
+  static Color get lightSurface => surface;
+  static Color get lightCard => surface;
+  static Color get lightBorder => border;
 
   static const List<Color> queensColors = [
     Color(0xFFE53935),
@@ -36,4 +40,17 @@ class AppColors {
     Color(0xFF795548),
     Color(0xFF607D8B),
   ];
+}
+
+class GameColors {
+  GameColors._();
+
+  static const Color bg = Color(0xFF121212);
+  static const Color surface = Color(0xFF1C1C1C);
+  static const Color primary = Color(0xFF2D2D2D);
+  static const Color headingDark = Color(0xFFFFFFFF);
+  static const Color headingWhite = Color(0xFF121212);
+  static const Color subtext = Color(0xFF888888);
+  static const Color gridLines = Color(0xFF2D2D2D);
+  static const Color border = Color(0x3DFFFFFF);
 }

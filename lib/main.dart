@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:queens/data/services/hive_service.dart';
 import 'package:queens/data/services/settings_service.dart';
+import 'package:queens/ui/core/theme/app_colors.dart';
 import 'package:queens/ui/core/theme/app_theme.dart';
 import 'package:queens/ui/providers.dart';
 import 'package:queens/ui/features/home/views/home_view.dart';
@@ -16,6 +17,9 @@ void main() async {
 
   final settingsService = SettingsService();
   await settingsService.init();
+
+  final initialSettings = settingsService.getSettings();
+  AppColors.currentTheme = initialSettings.theme;
 
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
@@ -32,14 +36,16 @@ void main() async {
   );
 }
 
-class QueensApp extends StatelessWidget {
+class QueensApp extends ConsumerWidget {
   const QueensApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    AppColors.currentTheme = settings.theme;
     return MaterialApp(
       title: 'Queens',
-      theme: AppTheme.light,
+      theme: AppTheme.fromPreset(settings.theme),
       home: const HomeView(),
       debugShowCheckedModeBanner: false,
     );

@@ -67,7 +67,7 @@ class _HomeViewState extends ConsumerState<HomeView> with SingleTickerProviderSt
           color: AppColors.surface,
           shape: BoxShape.circle,
           border: Border.all(
-            color: Colors.white24,
+            color: AppColors.border,
             width: 1.0,
           ),
         ),
@@ -107,13 +107,13 @@ class _HomeViewState extends ConsumerState<HomeView> with SingleTickerProviderSt
                         color: AppColors.surface,
                         borderRadius: BorderRadius.circular(30),
                         border: Border.all(
-                          color: Colors.white24,
+                          color: AppColors.border,
                           width: 1.0,
                         ),
                       ),
                       child: Text(
                         'LEVEL ${state.progress!.currentLevel}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'BebasNeue',
                           fontSize: 14,
                           fontWeight: FontWeight.w900,
@@ -141,7 +141,7 @@ class _HomeViewState extends ConsumerState<HomeView> with SingleTickerProviderSt
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: Colors.white24,
+                    color: AppColors.border,
                     width: 1.0,
                   ),
                 ),
@@ -190,7 +190,7 @@ class _HomeViewState extends ConsumerState<HomeView> with SingleTickerProviderSt
                 ),
               ),
               const SizedBox(height: 2),
-              const Text(
+              Text(
                 'A CROWN PLACEMENT LOGIC PUZZLE',
                 style: TextStyle(
                   fontFamily: 'BebasNeue',
@@ -303,7 +303,7 @@ class _HomeViewState extends ConsumerState<HomeView> with SingleTickerProviderSt
             color: AppColors.bg,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: Colors.white24,
+              color: AppColors.border,
               width: 1.0,
             ),
           ),
@@ -311,7 +311,7 @@ class _HomeViewState extends ConsumerState<HomeView> with SingleTickerProviderSt
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const FittedBox(
+              FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
                   'CHOOSE GRID SIZE',
@@ -325,7 +325,7 @@ class _HomeViewState extends ConsumerState<HomeView> with SingleTickerProviderSt
                 ),
               ),
               const SizedBox(height: 8),
-              const FittedBox(
+              FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
                   'Play a dynamically generated Queens puzzle.',
@@ -384,7 +384,7 @@ class _HomeViewState extends ConsumerState<HomeView> with SingleTickerProviderSt
               const SizedBox(height: 20),
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text(
+                child: Text(
                   'CANCEL',
                   style: TextStyle(
                     fontFamily: 'BebasNeue',

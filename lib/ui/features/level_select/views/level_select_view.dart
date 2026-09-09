@@ -47,18 +47,18 @@ class _LevelSelectViewState extends ConsumerState<LevelSelectView> {
                         color: AppColors.surface,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: Colors.white24,
+                          color: AppColors.border,
                           width: 1.0,
                         ),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.arrow_back_ios_new_rounded,
                         size: 18,
                         color: AppColors.headingDark,
                       ),
                     ),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Center(
                       child: Text(
                         'LEVELS',
@@ -129,7 +129,7 @@ class _LevelSelectViewState extends ConsumerState<LevelSelectView> {
         children: [
           Text(
             '$levelNumber',
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'BebasNeue',
               fontSize: 22,
               fontWeight: FontWeight.w900,
@@ -137,7 +137,7 @@ class _LevelSelectViewState extends ConsumerState<LevelSelectView> {
             ),
           ),
           const SizedBox(height: 2),
-          const Icon(
+          Icon(
             Icons.check_circle_rounded,
             size: 14,
             color: AppColors.headingWhite,
@@ -148,7 +148,7 @@ class _LevelSelectViewState extends ConsumerState<LevelSelectView> {
       cardBg = Colors.white;
       content = Text(
         '$levelNumber',
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'BebasNeue',
           fontSize: 26,
           color: AppColors.headingWhite,
@@ -158,7 +158,7 @@ class _LevelSelectViewState extends ConsumerState<LevelSelectView> {
     } else {
       // Locked state
       cardBg = AppColors.surface.withValues(alpha: 0.4);
-      content = const Icon(
+      content = Icon(
         Icons.lock_outline_rounded,
         size: 18,
         color: AppColors.subtext,
@@ -184,7 +184,7 @@ class _LevelSelectViewState extends ConsumerState<LevelSelectView> {
           color: cardBg,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Colors.white24,
+            color: AppColors.border,
             width: 1.0,
           ),
         ),

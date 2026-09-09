@@ -9,12 +9,18 @@ class TangibleButton extends StatefulWidget {
     required this.onPressed,
     this.isSecondary = false,
     this.height = 56,
+    this.backgroundColor,
+    this.textColor,
+    this.borderColor,
   });
 
   final String text;
   final VoidCallback? onPressed;
   final bool isSecondary;
   final double height;
+  final Color? backgroundColor;
+  final Color? textColor;
+  final Color? borderColor;
 
   @override
   State<TangibleButton> createState() => _TangibleButtonState();
@@ -28,11 +34,11 @@ class _TangibleButtonState extends State<TangibleButton> {
     final isInteractive = widget.onPressed != null;
     final isPressedNow = _isPressed && isInteractive;
 
-    final Color buttonBg = widget.isSecondary 
-        ? AppColors.surface 
-        : AppColors.primary;
+    final Color buttonBg = widget.backgroundColor ??
+        (widget.isSecondary ? AppColors.surface : AppColors.primary);
 
-    final Color textColor = AppColors.headingDark;
+    final Color textColor = widget.textColor ?? AppColors.headingDark;
+    final Color borderColor = widget.borderColor ?? AppColors.border;
 
     return GestureDetector(
       onTapDown: (_) {
@@ -59,7 +65,7 @@ class _TangibleButtonState extends State<TangibleButton> {
             color: buttonBg,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: Colors.white24,
+              color: borderColor,
               width: 1.0,
             ),
           ),

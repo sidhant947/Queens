@@ -76,7 +76,7 @@ class _GameViewState extends ConsumerState<GameView> {
                         state.isRandomMode
                             ? '${state.level?.gridSize ?? state.randomGridSize ?? 5}x${state.level?.gridSize ?? state.randomGridSize ?? 5}'
                             : 'LEVEL ${widget.levelNumber}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'BebasNeue',
                           fontSize: 26,
                           fontWeight: FontWeight.w900,
@@ -149,7 +149,7 @@ class _GameViewState extends ConsumerState<GameView> {
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Colors.white24,
+              color: AppColors.border,
               width: 1.0,
             ),
           ),
@@ -270,19 +270,21 @@ class _GameViewState extends ConsumerState<GameView> {
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: (state.canUndo && !state.isComplete) ? Colors.white24 : Colors.white10,
+                      color: (state.canUndo && !state.isComplete)
+                          ? AppColors.border
+                          : AppColors.border.withValues(alpha: 0.4),
                       width: 1.0,
                     ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
+                    children: [
                       Icon(
                         Icons.undo_rounded,
                         color: AppColors.headingDark,
                         size: 18,
                       ),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Text(
                         'UNDO',
                         style: TextStyle(
@@ -312,7 +314,9 @@ class _GameViewState extends ConsumerState<GameView> {
                       color: AppColors.surface,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: state.hintsRemaining > 0 ? Colors.white24 : Colors.white10,
+                        color: state.hintsRemaining > 0
+                            ? AppColors.border
+                            : AppColors.border.withValues(alpha: 0.4),
                         width: 1.0,
                       ),
                     ),
@@ -327,7 +331,7 @@ class _GameViewState extends ConsumerState<GameView> {
                         const SizedBox(width: 8),
                         Text(
                           'HINT (${state.hintsRemaining}/2)',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'BebasNeue',
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -343,8 +347,8 @@ class _GameViewState extends ConsumerState<GameView> {
             ],
           ],
         ),
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
           child: Text(
             'TAP: CYCLE [ EMPTY ➔ X ➔ QUEEN ♕ ]',
             style: TextStyle(
@@ -382,7 +386,13 @@ class _GameViewState extends ConsumerState<GameView> {
       }
 
       if (_dragTargetState != null && current != _dragTargetState) {
-        if (current == CellState.queen) return; // Never overwrite queens during a drag
+        if (current == CellState.queen) return;
+        final settings = ref.read(settingsProvider);
+        final level = stateProvider.level;
+        final isBlocked = level != null &&
+            !settings.isAutoCrossDisabled &&
+            CellRules.isCellBlocked(r, c, stateProvider.board, level);
+        if (isBlocked) return;
         ref.read(gameViewModelProvider.notifier).setCellState(r, c, _dragTargetState!);
       }
     }
@@ -407,7 +417,7 @@ class _GameViewState extends ConsumerState<GameView> {
             color: AppColors.surface,
             shape: BoxShape.circle,
             border: Border.all(
-              color: Colors.white24,
+              color: AppColors.border,
               width: 1.0,
             ),
           ),
@@ -439,7 +449,7 @@ class _GameViewState extends ConsumerState<GameView> {
         const SizedBox(height: 6),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'BebasNeue',
             fontSize: 24,
             fontWeight: FontWeight.w900,
@@ -450,7 +460,7 @@ class _GameViewState extends ConsumerState<GameView> {
         const SizedBox(height: 2),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'BebasNeue',
             fontSize: 12,
             fontWeight: FontWeight.bold,
@@ -464,8 +474,8 @@ class _GameViewState extends ConsumerState<GameView> {
 
   Widget _verticalDivider() {
     return Container(
-      width: 1.0,
-      height: 30,
+      width: 1,
+      height: 32,
       color: AppColors.gridLines,
     );
   }
@@ -503,7 +513,7 @@ class _GameViewState extends ConsumerState<GameView> {
                 color: AppColors.bg,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: Colors.white24,
+                  color: AppColors.border,
                   width: 1.0,
                 ),
               ),
@@ -517,18 +527,18 @@ class _GameViewState extends ConsumerState<GameView> {
                       color: AppColors.surface,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: Colors.white24,
+                        color: AppColors.border,
                         width: 1.0,
                       ),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.emoji_events_rounded,
                       color: AppColors.headingDark,
                       size: 56,
                     ),
                   ),
                   const SizedBox(height: 20),
-                  const FittedBox(
+                  FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
                       'LEVEL COMPLETE!',
@@ -549,7 +559,7 @@ class _GameViewState extends ConsumerState<GameView> {
                           ? 'You solved this ${state.level?.gridSize}x${state.level?.gridSize} puzzle in ${state.moveCount} moves and ${_formatTime(state.elapsedSeconds)}.'
                           : 'You solved Level ${widget.levelNumber} in ${state.moveCount} moves and ${_formatTime(state.elapsedSeconds)}.',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'BebasNeue',
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
@@ -567,9 +577,9 @@ class _GameViewState extends ConsumerState<GameView> {
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
                         border:
-                            Border.all(color: Colors.white24, width: 1.0),
+                            Border.all(color: AppColors.border, width: 1.0),
                       ),
-                      child: const Text(
+                      child: Text(
                         '★ NEW BEST!',
                         style: TextStyle(
                           fontFamily: 'BebasNeue',
@@ -591,6 +601,9 @@ class _GameViewState extends ConsumerState<GameView> {
                           TangibleButton(
                             text: state.isRandomMode ? 'Play Again' : 'Next Level',
                             height: 50,
+                            backgroundColor: AppColors.primary,
+                            textColor: AppColors.headingDark,
+                            borderColor: AppColors.border,
                             onPressed: () {
                               final notifier = ref.read(gameViewModelProvider.notifier);
                               Navigator.pop(context);
@@ -611,6 +624,9 @@ class _GameViewState extends ConsumerState<GameView> {
                             text: 'Home',
                             isSecondary: true,
                             height: 50,
+                            backgroundColor: AppColors.surface,
+                            textColor: AppColors.headingDark,
+                            borderColor: AppColors.border,
                             onPressed: () {
                               Navigator.pop(context);
                               Navigator.pop(context);
@@ -621,6 +637,9 @@ class _GameViewState extends ConsumerState<GameView> {
                             text: 'Buy Me a Coffee',
                             isSecondary: true,
                             height: 50,
+                            backgroundColor: AppColors.surface,
+                            textColor: AppColors.headingDark,
+                            borderColor: AppColors.border,
                             onPressed: _openKoFiUrl,
                           ),
                         ],
@@ -634,7 +653,7 @@ class _GameViewState extends ConsumerState<GameView> {
               top: 12,
               right: 12,
               child: IconButton(
-                icon: const Icon(Icons.close_rounded, color: AppColors.headingDark),
+                icon: Icon(Icons.close_rounded, color: AppColors.headingDark),
                 onPressed: () => Navigator.pop(context),
               ),
             ),
@@ -786,7 +805,7 @@ class _QueensCellState extends ConsumerState<QueensCell> with TickerProviderStat
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(6),
                         border: widget.isHinted
-                            ? Border.all(color: Colors.white24, width: 1.0)
+                            ? Border.all(color: GameColors.border, width: 1.0)
                             : null,
                       ),
                     ),
@@ -802,7 +821,7 @@ class _QueensCellState extends ConsumerState<QueensCell> with TickerProviderStat
   }
 
   Widget _buildContent(CrownSkin crownSkin, double cellSize) {
-    const Color activeIconColor = AppColors.headingDark;
+    final Color activeIconColor = GameColors.headingDark;
     final pieceSize = crownSkin.assetPath != null
         ? (cellSize * 0.82).clamp(16.0, 72.0)
         : (cellSize * 0.68).clamp(16.0, 56.0);
@@ -860,35 +879,19 @@ class _QueensCellState extends ConsumerState<QueensCell> with TickerProviderStat
           Icons.close_rounded,
           size: xSize,
           color: crossColor,
-          shadows: [
-            Shadow(
-              color: isBright ? Colors.black26 : Colors.black54,
-              blurRadius: isBright ? 1.5 : 4.0,
-              offset: const Offset(0, 1),
-            ),
-          ],
         ),
       );
     } else if (widget.isAutoBlocked) {
-      final dotSize = (cellSize * 0.42).clamp(10.0, 32.0);
+      final crossSize = (cellSize * 0.44).clamp(11.0, 36.0);
       final isBright = widget.regionColor.computeLuminance() > 0.65;
-      final autoCrossColor = isBright
-          ? const Color(0xFF121212).withValues(alpha: 0.7)
-          : activeIconColor.withValues(alpha: 0.75);
+      final crossColor = isBright ? const Color(0xFF121212) : activeIconColor;
       return AnimatedOpacity(
         duration: const Duration(milliseconds: 250),
-        opacity: widget.isAutoBlocked ? 1.0 : 0.0,
+        opacity: widget.isAutoBlocked ? 0.75 : 0.0,
         child: Icon(
           Icons.close_rounded,
-          size: dotSize,
-          color: autoCrossColor,
-          shadows: [
-            Shadow(
-              color: isBright ? Colors.black26 : Colors.black45,
-              blurRadius: isBright ? 1.5 : 3.0,
-              offset: const Offset(0, 1),
-            ),
-          ],
+          size: crossSize,
+          color: crossColor,
         ),
       );
     }

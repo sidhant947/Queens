@@ -26,18 +26,18 @@ class HowToPlayView extends StatelessWidget {
                         color: AppColors.surface,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: Colors.white24,
+                          color: AppColors.border,
                           width: 1.0,
                         ),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.arrow_back_ios_new_rounded,
                         size: 18,
                         color: AppColors.headingDark,
                       ),
                     ),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Center(
                       child: Text(
                         'HOW TO PLAY',
@@ -124,7 +124,7 @@ class HowToPlayView extends StatelessWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.white24,
+          color: AppColors.border,
           width: 1.0,
         ),
       ),
@@ -138,7 +138,7 @@ class HowToPlayView extends StatelessWidget {
               color: iconBg,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: Colors.white24,
+                color: AppColors.border,
                 width: 1.0,
               ),
             ),
@@ -151,7 +151,7 @@ class HowToPlayView extends StatelessWidget {
               children: [
                 Text(
                   'RULE $num',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'BebasNeue',
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -162,7 +162,7 @@ class HowToPlayView extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   title.toUpperCase(),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'BebasNeue',
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
@@ -173,7 +173,7 @@ class HowToPlayView extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   desc,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     color: AppColors.subtext,
                     height: 1.3,

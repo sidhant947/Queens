@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:queens/domain/models/app_settings.dart';
 
 /// A page transitions builder that applies no animation at all.
 class _NoTransitionBuilder extends PageTransitionsBuilder {
@@ -30,77 +31,45 @@ class AppTheme {
     },
   );
 
-  // 1. Light Neobrutalist Theme (Warm Ivory & Charcoal)
-  static ThemeData get light => ThemeData(
-    fontFamily: 'BebasNeue',
-    pageTransitionsTheme: _noTransitionTheme,
-    brightness: Brightness.light,
-    scaffoldBackgroundColor: const Color(0xFFFAF6EE),
-    appBarTheme: const AppBarTheme(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      centerTitle: true,
-      titleTextStyle: TextStyle(
-        fontSize: 26,
-        fontWeight: FontWeight.w900,
-        color: Color(0xFF2B2D42),
-        letterSpacing: 1.0,
+  static ThemeData fromPreset(AppThemePreset preset) {
+    final isLight = preset == AppThemePreset.ivory;
+    return ThemeData(
+      fontFamily: 'BebasNeue',
+      pageTransitionsTheme: _noTransitionTheme,
+      brightness: isLight ? Brightness.light : Brightness.dark,
+      scaffoldBackgroundColor: preset.bg,
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: TextStyle(
+          fontSize: 26,
+          fontWeight: FontWeight.w900,
+          color: preset.headingDark,
+          letterSpacing: 1.0,
+        ),
+        iconTheme: IconThemeData(color: preset.headingDark),
       ),
-      iconTheme: IconThemeData(color: Color(0xFF2B2D42)),
-    ),
-    dividerTheme: const DividerThemeData(
-      color: Color(0xFFE2E2E6),
-      thickness: 1,
-    ),
-    textTheme: const TextTheme(
-      displayLarge: TextStyle(color: Color(0xFF2B2D42), letterSpacing: -0.5),
-      displayMedium: TextStyle(color: Color(0xFF2B2D42), letterSpacing: -0.5),
-      displaySmall: TextStyle(color: Color(0xFF2B2D42), letterSpacing: -0.5),
-      headlineLarge: TextStyle(color: Color(0xFF2B2D42), letterSpacing: -0.5),
-      headlineMedium: TextStyle(color: Color(0xFF2B2D42), letterSpacing: -0.5),
-      headlineSmall: TextStyle(color: Color(0xFF2B2D42), letterSpacing: -0.5),
-      titleLarge: TextStyle(color: Color(0xFF2B2D42), letterSpacing: 0.5),
-      titleMedium: TextStyle(color: Color(0xFF2B2D42), letterSpacing: 0.5),
-      bodyLarge: TextStyle(color: Color(0xFF2B2D42), fontWeight: FontWeight.w500),
-      bodyMedium: TextStyle(color: Color(0xFF6C757D), fontWeight: FontWeight.normal),
-      labelLarge: TextStyle(color: Color(0xFF2B2D42), fontWeight: FontWeight.bold),
-    ),
-  );
+      dividerTheme: DividerThemeData(
+        color: preset.border,
+        thickness: 1,
+      ),
+      textTheme: TextTheme(
+        displayLarge: TextStyle(color: preset.headingDark, letterSpacing: -0.5),
+        displayMedium: TextStyle(color: preset.headingDark, letterSpacing: -0.5),
+        displaySmall: TextStyle(color: preset.headingDark, letterSpacing: -0.5),
+        headlineLarge: TextStyle(color: preset.headingDark, letterSpacing: -0.5),
+        headlineMedium: TextStyle(color: preset.headingDark, letterSpacing: -0.5),
+        headlineSmall: TextStyle(color: preset.headingDark, letterSpacing: -0.5),
+        titleLarge: TextStyle(color: preset.headingDark, letterSpacing: 0.5),
+        titleMedium: TextStyle(color: preset.headingDark, letterSpacing: 0.5),
+        bodyLarge: TextStyle(color: preset.headingDark, fontWeight: FontWeight.w500),
+        bodyMedium: TextStyle(color: preset.subtext, fontWeight: FontWeight.normal),
+        labelLarge: TextStyle(color: preset.headingDark, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
 
-  // 2. Premium Obsidian Dark Neobrutalist Theme (Deep Night Obsidian & Cream Highlights)
-  static ThemeData get dark => ThemeData(
-    fontFamily: 'BebasNeue',
-    pageTransitionsTheme: _noTransitionTheme,
-    brightness: Brightness.dark,
-    scaffoldBackgroundColor: const Color(0xFF121318), // Deep Premium Obsidian
-    appBarTheme: const AppBarTheme(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      centerTitle: true,
-      titleTextStyle: TextStyle(
-        fontSize: 26,
-        fontWeight: FontWeight.w900,
-        color: Color(0xFFFAF6EE), // Cream white
-        letterSpacing: 1.0,
-      ),
-      iconTheme: IconThemeData(color: Color(0xFFFAF6EE)),
-    ),
-    dividerTheme: const DividerThemeData(
-      color: Color(0xFF232530),
-      thickness: 1,
-    ),
-    textTheme: const TextTheme(
-      displayLarge: TextStyle(color: Color(0xFFFAF6EE), letterSpacing: -0.5),
-      displayMedium: TextStyle(color: Color(0xFFFAF6EE), letterSpacing: -0.5),
-      displaySmall: TextStyle(color: Color(0xFFFAF6EE), letterSpacing: -0.5),
-      headlineLarge: TextStyle(color: Color(0xFFFAF6EE), letterSpacing: -0.5),
-      headlineMedium: TextStyle(color: Color(0xFFFAF6EE), letterSpacing: -0.5),
-      headlineSmall: TextStyle(color: Color(0xFFFAF6EE), letterSpacing: -0.5),
-      titleLarge: TextStyle(color: Color(0xFFFAF6EE), letterSpacing: 0.5),
-      titleMedium: TextStyle(color: Color(0xFFFAF6EE), letterSpacing: 0.5),
-      bodyLarge: TextStyle(color: Color(0xFFFAF6EE), fontWeight: FontWeight.w500),
-      bodyMedium: TextStyle(color: Color(0xFF8E92A6), fontWeight: FontWeight.normal),
-      labelLarge: TextStyle(color: Color(0xFFFAF6EE), fontWeight: FontWeight.bold),
-    ),
-  );
+  static ThemeData get light => fromPreset(AppThemePreset.ivory);
+  static ThemeData get dark => fromPreset(AppThemePreset.obsidian);
 }
