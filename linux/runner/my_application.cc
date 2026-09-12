@@ -42,17 +42,30 @@ static void my_application_activate(GApplication* application) {
     }
   }
 #endif
+  // A phone has no room for a header bar and its compositor owns the frame, so
+  // QUEENS_NO_TITLEBAR=1 asks for neither. Phone images set it in the .desktop
+  // file; everywhere else it is unset and the branches above decide exactly as
+  // they did before.
+  gboolean phone = g_strcmp0(g_getenv("QUEENS_NO_TITLEBAR"), "1") == 0;
+  if (phone) {
+    use_header_bar = FALSE;
+    gtk_window_set_decorated(window, FALSE);
+  }
   if (use_header_bar) {
     GtkHeaderBar* header_bar = GTK_HEADER_BAR(gtk_header_bar_new());
     gtk_widget_show(GTK_WIDGET(header_bar));
-    gtk_header_bar_set_title(header_bar, "queens");
+    gtk_header_bar_set_title(header_bar, "Queens");
     gtk_header_bar_set_show_close_button(header_bar, TRUE);
     gtk_window_set_titlebar(window, GTK_WIDGET(header_bar));
   } else {
-    gtk_window_set_title(window, "queens");
+    gtk_window_set_title(window, "Queens");
   }
 
-  gtk_window_set_default_size(window, 1280, 720);
+  if (phone) {
+    gtk_window_set_default_size(window, 360, 720);
+  } else {
+    gtk_window_set_default_size(window, 1280, 720);
+  }
 
   g_autoptr(FlDartProject) project = fl_dart_project_new();
   fl_dart_project_set_dart_entrypoint_arguments(
