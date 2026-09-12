@@ -44,7 +44,6 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-/linux/
 
 # Local Hive databases or test DB files
 *.hive
