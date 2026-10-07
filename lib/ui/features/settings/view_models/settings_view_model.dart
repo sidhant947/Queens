@@ -20,17 +20,11 @@ class SettingsViewModel extends StateNotifier<AppSettings> {
   }
 
   Future<void> setCrownSkin(CrownSkin skin) async {
-    if (!skin.isFree && !state.isUnlocked) {
-      return;
-    }
     state = state.copyWith(crownSkin: skin);
     await settingsService.saveSettings(state);
   }
 
   Future<void> setTheme(AppThemePreset theme) async {
-    if (!theme.isFree && !state.isUnlocked) {
-      return;
-    }
     state = state.copyWith(theme: theme);
     await settingsService.saveSettings(state);
   }
@@ -38,14 +32,5 @@ class SettingsViewModel extends StateNotifier<AppSettings> {
   Future<void> toggleHintEnabled(bool value) async {
     state = state.copyWith(isHintEnabled: value);
     await settingsService.saveSettings(state);
-  }
-
-  Future<bool> unlock(String code) async {
-    if (code.trim().toLowerCase() == 'thankyou') {
-      state = state.copyWith(isUnlocked: true);
-      await settingsService.saveSettings(state);
-      return true;
-    }
-    return false;
   }
 }

@@ -23,10 +23,7 @@ enum CrownSkin {
     );
   }
 
-  bool get isFree =>
-      this == CrownSkin.classic ||
-      this == CrownSkin.queen ||
-      this == CrownSkin.cat;
+  bool get isFree => true;
 }
 
 enum AppThemePreset {
@@ -222,10 +219,7 @@ enum AppThemePreset {
 
   bool get isDark => bg.computeLuminance() < 0.5;
 
-  bool get isFree =>
-      this == AppThemePreset.obsidian ||
-      this == AppThemePreset.midnight ||
-      this == AppThemePreset.emerald;
+  bool get isFree => true;
 }
 
 @immutable
@@ -236,7 +230,7 @@ class AppSettings {
     this.crownSkin = CrownSkin.classic,
     this.isHintEnabled = false,
     this.theme = AppThemePreset.obsidian,
-    this.isUnlocked = false,
+    this.isUnlocked = true,
   });
 
   final bool isColorblindMode;

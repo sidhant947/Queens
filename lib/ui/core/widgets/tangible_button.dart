@@ -12,6 +12,8 @@ class TangibleButton extends StatefulWidget {
     this.backgroundColor,
     this.textColor,
     this.borderColor,
+    this.fontSize = 20,
+    this.fontWeight = FontWeight.w900,
   });
 
   final String text;
@@ -21,6 +23,8 @@ class TangibleButton extends StatefulWidget {
   final Color? backgroundColor;
   final Color? textColor;
   final Color? borderColor;
+  final double fontSize;
+  final FontWeight fontWeight;
 
   @override
   State<TangibleButton> createState() => _TangibleButtonState();
@@ -75,9 +79,9 @@ class _TangibleButtonState extends State<TangibleButton> {
             style: TextStyle(
               fontFamily: 'BebasNeue',
               color: textColor,
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1.5,
+              fontSize: widget.fontSize,
+              fontWeight: widget.fontWeight,
+              letterSpacing: 1.0,
             ),
           ),
         ),

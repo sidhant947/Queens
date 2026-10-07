@@ -6,7 +6,6 @@ import 'package:queens/domain/models/app_settings.dart';
 import 'package:queens/ui/core/theme/app_colors.dart';
 import 'package:queens/ui/core/widgets/crown_widget.dart';
 import 'package:queens/ui/core/widgets/tangible_button.dart';
-import 'package:queens/ui/features/settings/widgets/unlock_themes_dialog.dart';
 import 'package:queens/ui/providers.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -82,17 +81,9 @@ class SettingsView extends ConsumerWidget {
                       itemBuilder: (context, index) {
                         final preset = AppThemePreset.values[index];
                         final isSelected = settings.theme == preset;
-                        final isLocked = !preset.isFree && !settings.isUnlocked;
                         return GestureDetector(
                           onTap: () {
                             HapticFeedback.selectionClick();
-                            if (isLocked) {
-                              UnlockThemesDialog.show(
-                                context,
-                                targetPreset: preset,
-                              );
-                              return;
-                            }
                             ref
                                 .read(settingsProvider.notifier)
                                 .setTheme(preset);
@@ -121,20 +112,14 @@ class SettingsView extends ConsumerWidget {
                                   : null,
                             ),
                             child: Center(
-                              child: isLocked
-                                  ? Icon(
-                                      Icons.lock_rounded,
-                                      size: 14,
-                                      color: preset.accent.withValues(alpha: 0.8),
-                                    )
-                                  : Container(
-                                      width: 14,
-                                      height: 14,
-                                      decoration: BoxDecoration(
-                                        color: preset.accent,
-                                        shape: BoxShape.circle,
-                                      ),
-                                    ),
+                              child: Container(
+                                width: 14,
+                                height: 14,
+                                decoration: BoxDecoration(
+                                  color: preset.accent,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
                             ),
                           ),
                         );
@@ -150,38 +135,30 @@ class SettingsView extends ConsumerWidget {
                   ),
                   const SizedBox(height: 12),
                   SizedBox(
-                    height: 56,
+                    height: 72,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: CrownSkin.values.length,
-                      separatorBuilder: (_, _) => const SizedBox(width: 8),
+                      separatorBuilder: (_, _) => const SizedBox(width: 10),
                       itemBuilder: (context, index) {
                         final skin = CrownSkin.values[index];
                         final isSelected = settings.crownSkin == skin;
-                        final isLocked = !skin.isFree && !settings.isUnlocked;
                         return GestureDetector(
                           onTap: () {
                             HapticFeedback.selectionClick();
-                            if (isLocked) {
-                              UnlockThemesDialog.show(
-                                context,
-                                targetCrownSkin: skin,
-                              );
-                              return;
-                            }
                             ref
                                 .read(settingsProvider.notifier)
                                 .setCrownSkin(skin);
                           },
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 150),
-                            width: 56,
-                            height: 56,
+                            width: 72,
+                            height: 72,
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? AppColors.accent.withValues(alpha: 0.16)
                                   : AppColors.surface,
-                              borderRadius: BorderRadius.circular(14),
+                              borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: isSelected
                                     ? AppColors.accent
@@ -190,35 +167,12 @@ class SettingsView extends ConsumerWidget {
                               ),
                             ),
                             child: Center(
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  Opacity(
-                                    opacity: isLocked ? 0.35 : 1.0,
-                                    child: CrownWidget(
-                                      size: 28,
-                                      skin: skin,
-                                      color: isSelected
-                                          ? const Color(0xFFFFCC00)
-                                          : AppColors.headingDark,
-                                    ),
-                                  ),
-                                  if (isLocked)
-                                    IgnorePointer(
-                                      child: Container(
-                                        padding: const EdgeInsets.all(4),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.surface.withValues(alpha: 0.8),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Icon(
-                                          Icons.lock_rounded,
-                                          size: 12,
-                                          color: AppColors.headingDark,
-                                        ),
-                                      ),
-                                    ),
-                                ],
+                              child: CrownWidget(
+                                size: 46,
+                                skin: skin,
+                                color: isSelected
+                                    ? const Color(0xFFFFCC00)
+                                    : AppColors.headingDark,
                               ),
                             ),
                           ),
