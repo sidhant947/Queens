@@ -285,94 +285,66 @@ class SettingsView extends ConsumerWidget {
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'BebasNeue',
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: AppColors.headingDark,
-              letterSpacing: 1.5,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onChanged(!value);
+        },
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'BebasNeue',
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.headingDark,
+                letterSpacing: 1.5,
+              ),
             ),
-          ),
-          Container(
-            height: 36,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.border, width: 1.0),
-            ),
-            padding: const EdgeInsets.all(3),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    if (!value) {
-                      HapticFeedback.selectionClick();
-                      onChanged(true);
-                    }
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: value ? AppColors.accent : Colors.transparent,
-                      borderRadius: BorderRadius.circular(7),
-                    ),
-                    child: Text(
-                      'ON',
-                      style: TextStyle(
-                        fontFamily: 'BebasNeue',
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: value
-                            ? (AppColors.currentTheme.isDark
-                                ? const Color(0xFF121212)
-                                : const Color(0xFFFFFFFF))
-                            : AppColors.subtext,
-                        letterSpacing: 1.0,
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              width: 50,
+              height: 28,
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                color: value ? AppColors.accent : AppColors.surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: value ? AppColors.accent : AppColors.border,
+                  width: 1.5,
+                ),
+              ),
+              child: AnimatedAlign(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+                child: Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: value
+                        ? (AppColors.currentTheme.isDark
+                            ? const Color(0xFF121212)
+                            : const Color(0xFFFFFFFF))
+                        : AppColors.subtext,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.25),
+                        blurRadius: 3,
+                        offset: const Offset(0, 1),
                       ),
-                    ),
+                    ],
                   ),
                 ),
-                GestureDetector(
-                  onTap: () {
-                    if (value) {
-                      HapticFeedback.selectionClick();
-                      onChanged(false);
-                    }
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: !value
-                          ? AppColors.headingDark.withValues(alpha: 0.15)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(7),
-                    ),
-                    child: Text(
-                      'OFF',
-                      style: TextStyle(
-                        fontFamily: 'BebasNeue',
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: !value ? AppColors.headingDark : AppColors.subtext,
-                        letterSpacing: 1.0,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

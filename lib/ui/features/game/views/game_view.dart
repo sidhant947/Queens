@@ -8,6 +8,7 @@ import 'package:queens/domain/use_cases/cell_rules.dart';
 import 'package:queens/ui/core/theme/app_colors.dart';
 import 'package:queens/ui/core/widgets/tangible_button.dart';
 import 'package:queens/ui/core/widgets/crown_widget.dart';
+import 'package:queens/ui/core/widgets/cross_widget.dart';
 import 'package:queens/ui/features/game/view_models/game_view_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:queens/ui/providers.dart';
@@ -742,28 +743,22 @@ class _QueensCellState extends ConsumerState<QueensCell> with TickerProviderStat
         ),
       );
     } else if (widget.cellState == CellState.x) {
-      final xSize = (cellSize * 0.58).clamp(14.0, 48.0);
-      final isBright = widget.regionColor.computeLuminance() > 0.65;
-      final crossColor = isBright ? const Color(0xFF121212) : activeIconColor;
+      final xSize = (cellSize * 0.72).clamp(18.0, 56.0);
       return ScaleTransition(
         scale: _scaleAnimation,
-        child: Icon(
-          Icons.close_rounded,
+        child: CrossWidget(
           size: xSize,
-          color: crossColor,
+          color: Colors.white,
         ),
       );
     } else if (widget.isAutoBlocked) {
-      final crossSize = (cellSize * 0.44).clamp(11.0, 36.0);
-      final isBright = widget.regionColor.computeLuminance() > 0.65;
-      final crossColor = isBright ? const Color(0xFF121212) : activeIconColor;
+      final crossSize = (cellSize * 0.54).clamp(14.0, 42.0);
       return AnimatedOpacity(
         duration: const Duration(milliseconds: 250),
         opacity: widget.isAutoBlocked ? 0.75 : 0.0,
-        child: Icon(
-          Icons.close_rounded,
+        child: CrossWidget(
           size: crossSize,
-          color: crossColor,
+          color: Colors.white,
         ),
       );
     }
