@@ -32,6 +32,50 @@ class CellRules {
     return false;
   }
 
+  static List<List<bool>> computeBlockedGrid(
+    List<List<CellState>> board,
+    GameLevel level,
+  ) {
+    final n = level.gridSize;
+    final blocked = List.generate(n, (_) => List<bool>.filled(n, false));
+    final queens = <(int, int)>[];
+    final queenRows = <int>{};
+    final queenCols = <int>{};
+    final queenRegions = <int>{};
+
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
+        if (board[i][j] == CellState.queen) {
+          queens.add((i, j));
+          queenRows.add(i);
+          queenCols.add(j);
+          queenRegions.add(level.colorRegions[i][j]);
+        }
+      }
+    }
+
+    if (queens.isEmpty) return blocked;
+
+    for (int r = 0; r < n; r++) {
+      for (int c = 0; c < n; c++) {
+        if (board[r][c] != CellState.empty) continue;
+        if (queenRows.contains(r) ||
+            queenCols.contains(c) ||
+            queenRegions.contains(level.colorRegions[r][c])) {
+          blocked[r][c] = true;
+          continue;
+        }
+        for (final q in queens) {
+          if ((q.$1 - r).abs() <= 1 && (q.$2 - c).abs() <= 1) {
+            blocked[r][c] = true;
+            break;
+          }
+        }
+      }
+    }
+    return blocked;
+  }
+
   /// Computes the conflict grid for the current board.
   ///
   /// Only placed queens are compared pairwise (O(Q²) where Q is the number of

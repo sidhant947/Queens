@@ -47,7 +47,22 @@ class _GameViewState extends ConsumerState<GameView> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(gameViewModelProvider);
+    ref.watch(gameViewModelProvider.select((s) => (
+      s.isLoading,
+      s.error,
+      s.isComplete,
+      s.level,
+      s.board,
+      s.conflicts,
+      s.moveCount,
+      s.canUndo,
+      s.hintCell,
+      s.hintsRemaining,
+      s.isRandomMode,
+      s.randomDifficulty,
+      s.randomGridSize,
+    )));
+    final state = ref.read(gameViewModelProvider);
 
     ref.listen<GameViewModelState>(gameViewModelProvider, (prev, next) {
       if (next.isComplete && !(prev?.isComplete ?? false)) {
@@ -150,7 +165,14 @@ class _GameViewState extends ConsumerState<GameView> {
             children: [
               _stat('MOVES', '${state.moveCount}', Icons.trending_up_rounded),
               _verticalDivider(),
-              _stat('TIME', _formatTime(state.elapsedSeconds), Icons.timer_outlined),
+              Consumer(
+                builder: (context, ref, _) {
+                  final elapsedSeconds = ref.watch(
+                    gameViewModelProvider.select((s) => s.elapsedSeconds),
+                  );
+                  return _stat('TIME', _formatTime(elapsedSeconds), Icons.timer_outlined);
+                },
+              ),
               _verticalDivider(),
               _stat('QUEENS', '$queenCount/${level.gridSize}', Icons.star_rounded),
             ],
@@ -169,6 +191,12 @@ class _GameViewState extends ConsumerState<GameView> {
                     child: LayoutBuilder(
                       builder: (context, constraints) {
                         final N = level.gridSize;
+                        final cellSize = constraints.maxWidth / N;
+                        final settings = ref.watch(settingsProvider);
+                        final blockedGrid = !settings.isAutoCrossDisabled
+                            ? CellRules.computeBlockedGrid(state.board, level)
+                            : null;
+                        final isColorblindMode = settings.isColorblindMode;
 
                       return GestureDetector(
                         onPanStart: (details) {
@@ -189,14 +217,10 @@ class _GameViewState extends ConsumerState<GameView> {
                                 final hasConflict = state.conflicts[r][c];
                                 final regionIndex = level.colorRegions[r][c];
                                 final regionColor = level.regionColors[regionIndex];
-
-                                final settings = ref.watch(settingsProvider);
-                                final blocked = !settings.isAutoCrossDisabled &&
-                                    CellRules.isCellBlocked(r, c, state.board, level);
+                                final blocked = blockedGrid != null && blockedGrid[r][c];
                                 final isHinted =
                                     state.hintCell == r * N + c;
 
-                                final isColorblindMode = settings.isColorblindMode;
                                 Border? regionBorder;
                                 if (isColorblindMode) {
                                   final topDiff = r == 0 || level.colorRegions[r - 1][c] != regionIndex;
@@ -219,6 +243,7 @@ class _GameViewState extends ConsumerState<GameView> {
 
                                 return Expanded(
                                   child: QueensCell(
+                                    cellSize: cellSize,
                                     cellState: cellState,
                                     hasConflict: hasConflict,
                                     isAutoBlocked: blocked,
@@ -553,6 +578,7 @@ class _GameViewState extends ConsumerState<GameView> {
 class QueensCell extends ConsumerStatefulWidget {
   const QueensCell({
     super.key,
+    required this.cellSize,
     required this.cellState,
     required this.hasConflict,
     required this.isAutoBlocked,
@@ -562,6 +588,7 @@ class QueensCell extends ConsumerStatefulWidget {
     required this.onTap,
   });
 
+  final double cellSize;
   final CellState cellState;
   final bool hasConflict;
   final bool isAutoBlocked;
@@ -599,11 +626,14 @@ class _QueensCellState extends ConsumerState<QueensCell> with TickerProviderStat
     _glowController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
-    )..repeat(reverse: true);
+    );
     
     _glowAnimation = Tween<double>(begin: 4.0, end: 12.0).animate(
       CurvedAnimation(parent: _glowController, curve: Curves.easeInOut),
     );
+    if (widget.cellState == CellState.queen && !widget.hasConflict) {
+      _glowController.repeat(reverse: true);
+    }
 
     _shakeController = AnimationController(
       vsync: this,
@@ -630,6 +660,14 @@ class _QueensCellState extends ConsumerState<QueensCell> with TickerProviderStat
     }
     if (widget.hasConflict && !oldWidget.hasConflict) {
       _shakeController.forward(from: 0.0);
+    }
+    final shouldGlow = widget.cellState == CellState.queen && !widget.hasConflict;
+    final didGlow = oldWidget.cellState == CellState.queen && !oldWidget.hasConflict;
+    if (shouldGlow && !didGlow) {
+      _glowController.repeat(reverse: true);
+    } else if (!shouldGlow && didGlow) {
+      _glowController.stop();
+      _glowController.value = 0.0;
     }
   }
 
@@ -662,31 +700,26 @@ class _QueensCellState extends ConsumerState<QueensCell> with TickerProviderStat
             border: widget.regionBorder,
           ),
           alignment: Alignment.center,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final cellSize = math.min(constraints.maxWidth, constraints.maxHeight);
-              return Stack(
-                alignment: Alignment.center,
-                children: [
-                  Positioned.fill(
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
-                      margin: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        color: widget.isHinted
-                            ? Colors.white.withValues(alpha: 0.3)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(6),
-                        border: widget.isHinted
-                            ? Border.all(color: GameColors.border, width: 1.0)
-                            : null,
-                      ),
-                    ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Positioned.fill(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  margin: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: widget.isHinted
+                        ? Colors.white.withValues(alpha: 0.3)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(6),
+                    border: widget.isHinted
+                        ? Border.all(color: GameColors.border, width: 1.0)
+                        : null,
                   ),
-                  _buildContent(settings.crownSkin, cellSize),
-                ],
-              );
-            },
+                ),
+              ),
+              _buildContent(settings.crownSkin, widget.cellSize),
+            ],
           ),
         ),
       ),

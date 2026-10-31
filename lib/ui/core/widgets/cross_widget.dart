@@ -16,14 +16,16 @@ class CrossWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: CustomPaint(
-        painter: CrossPainter(
-          color: color,
-          shadowColor: shadowColor,
-          strokeWidthRatio: strokeWidthRatio,
+    return RepaintBoundary(
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: CustomPaint(
+          painter: CrossPainter(
+            color: color,
+            shadowColor: shadowColor,
+            strokeWidthRatio: strokeWidthRatio,
+          ),
         ),
       ),
     );
@@ -51,26 +53,17 @@ class CrossPainter extends CustomPainter {
     final p3 = Offset(size.width - padding, padding);
     final p4 = Offset(padding, size.height - padding);
 
-    final shadowSpread = Paint()
-      ..color = shadowColor
-      ..strokeWidth = strokeWidth + 2.5
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
+    if (shadowColor.a > 0) {
+      final dropOffset = Offset(0, size.height * 0.05);
+      final dropShadow = Paint()
+        ..color = shadowColor
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.round
+        ..style = PaintingStyle.stroke;
 
-    canvas.drawLine(p1, p2, shadowSpread);
-    canvas.drawLine(p3, p4, shadowSpread);
-
-    final dropOffset = Offset(0, size.height * 0.05);
-    final dropShadow = Paint()
-      ..color = shadowColor.withValues(alpha: shadowColor.a * 0.85)
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.5);
-
-    canvas.drawLine(p1 + dropOffset, p2 + dropOffset, dropShadow);
-    canvas.drawLine(p3 + dropOffset, p4 + dropOffset, dropShadow);
+      canvas.drawLine(p1 + dropOffset, p2 + dropOffset, dropShadow);
+      canvas.drawLine(p3 + dropOffset, p4 + dropOffset, dropShadow);
+    }
 
     final crossPaint = Paint()
       ..color = color
